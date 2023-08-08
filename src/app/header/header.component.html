@@ -1,0 +1,20 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-button routerLink="/home" class="logo-button">
+      <ion-title>
+        TokenPlay
+        <p class="subtitle">Not your Keys not your Games</p>
+      </ion-title>
+  </ion-button>
+
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+
+    <ion-buttons slot="end">
+      <ion-button *ngFor="let p of menuPages" [routerLink]="p.url">
+        <ion-icon [name]="p.icon"></ion-icon>{{ p.title }}
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
