@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  networkId: 11155111,
+  provider: 'https://sepolia.infura.io/v3/d09825f256ae4705a74fdee006040903',
 };
 
 /*
