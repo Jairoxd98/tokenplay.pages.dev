@@ -8,9 +8,11 @@
     <ion-label position="floating">Password</ion-label>
     <ion-input type="password" [(ngModel)]="password"></ion-input>
   </ion-item>
-  <ion-button expand="full" (click)="login()">Sign In</ion-button>
 
-  <ion-item-divider class="bottomSpacer"></ion-item-divider>
+  <ion-item>
+    <ion-label position="floating">RetypePassword</ion-label>
+    <ion-input type="password" [(ngModel)]="retypePassword"></ion-input>
+  </ion-item>
 
-  <ion-button expand="full" class="btnMetaMask" (click)="loginMetaMask()">Sign In with MetaMask</ion-button>
+  <ion-button expand="full" (click)="register()">Sign Up</ion-button>
 </ion-content>

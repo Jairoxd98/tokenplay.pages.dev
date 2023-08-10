@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -7,13 +9,28 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HeaderComponent implements OnInit {
 
-  public menuPages = [
-    { title: 'Login', url: '/login', icon: 'person' },
-  ];
+  private loggedInSubs: Subscription;
+  isLoggedIn : boolean = false;
+  address : any;
 
-  constructor() { }
+  constructor(private authService: AuthService) {
+    this.address = localStorage.getItem('address');
+
+    this.loggedInSubs = this.authService.isUserLoggedIn$.subscribe(isLoggedIn => {
+      this.isLoggedIn = isLoggedIn;
+    });
+
+  }
 
   ngOnInit() {
+  }
+
+  getAddress(){
+    return this.authService.address;
+  }
+
+  logout(){
+    this.authService.logOut();
   }
 
 }

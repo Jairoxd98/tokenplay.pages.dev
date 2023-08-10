@@ -12,8 +12,17 @@
     </ion-buttons>
 
     <ion-buttons slot="end">
-      <ion-button *ngFor="let p of menuPages" [routerLink]="p.url">
-        <ion-icon [name]="p.icon"></ion-icon>{{ p.title }}
+      <ion-button *ngIf="!isLoggedIn" [routerLink]="'/login'">
+        <ion-icon [name]="'person'"></ion-icon>Sign In
+      </ion-button>
+      <ion-button *ngIf="!isLoggedIn" [routerLink]="'/register'">
+        <ion-icon [name]="'person'"></ion-icon>Register
+      </ion-button>
+      <ion-button *ngIf="isLoggedIn" [routerLink]="'/user'">
+        <ion-icon [name]="'person'"></ion-icon>{{getAddress()}}
+      </ion-button>
+      <ion-button *ngIf="isLoggedIn" (click)="logout()">
+        <ion-icon [name]="'person'"></ion-icon>Logout
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
