@@ -24,10 +24,16 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         address gameOwnerAddress;
     }
 
+    // Estructura para devolver los juegos que ha comprado un usuario y la cantidad que tiene de cada juego
+    struct PurchasedNft {
+        NftGameInfo game;
+        uint256 qty;
+    }
+
     constructor(string memory _uri) ERC1155(_uri) {}
 
     // Contador autoincremental, cada número será un juego (token)
-    uint256 public nextTokenId = 1;
+    uint256 public nextTokenId = 0;
     // Estructura, donde por cada juego definiremos el precio
     mapping(uint256 => NftGameInfo) public gamesInfo;
     mapping(address => EnumerableSet.UintSet) private purchasedNFTs;
@@ -43,7 +49,7 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
     // Función para comprar un juego (un token)
     function purchaseNFT(uint256 tokenId) external payable {
         require(mintIsActive, "Mint is not active");
-        require(tokenId > 0 && tokenId < nextTokenId, "Invalid token ID");
+        require(tokenId >= 0 && tokenId < nextTokenId, "Invalid token ID");
         uint256 price = gamesInfo[tokenId].price;
         require(msg.value >= price, "Insufficient funds");
 
@@ -54,9 +60,9 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         }
 
         // Calculamos los porcentajes que se lleva cada parte y hacemos la transferencia de los tokens
-        uint256 paymentAmount = price; // Assuming the minting function is payable
-        uint256 gameOwner = paymentAmount.mul(royaltyPercentage).div(100); // royaltypercentage for the game owner
-        uint256 tokenPlay = paymentAmount.sub(gameOwner);  // restant for tokenplay
+        uint256 paymentAmount = price;
+        uint256 gameOwner = paymentAmount.mul(royaltyPercentage).div(100); // royaltypercentage para el game owner
+        uint256 tokenPlay = paymentAmount.sub(gameOwner);  // el restante para tokenplay
 
         payable(owner()).transfer(tokenPlay);
         payable(gamesInfo[tokenId].gameOwnerAddress).transfer(gameOwner);
@@ -67,14 +73,29 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         }
     }
 
-    function getPurchasedNFTs(address account) external view returns (uint256[] memory) {
-        uint256[] memory tokens = new uint256[](purchasedNFTs[account].length());
+    // Funcion para obtener los juegos que ha comprado un usuario
+    function getPurchasedNFTs(address account) external view returns (PurchasedNft[] memory) {
+        PurchasedNft[] memory accountGames = new PurchasedNft[](purchasedNFTs[account].length());
 
         for (uint256 i = 0; i < purchasedNFTs[account].length(); i++) {
-            tokens[i] = purchasedNFTs[account].at(i);
+            uint256 id = purchasedNFTs[account].at(i);
+            accountGames[i].game = gamesInfo[id];
+            accountGames[i].qty = balanceOf(account, id);
         }
 
-        return tokens;
+        return accountGames;
+    }
+
+    // Función para obtener todos los juegos disponibles
+    function getNFTs() external view returns (NftGameInfo[] memory) {
+        NftGameInfo[] memory allNFTs = new NftGameInfo[](nextTokenId);
+
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            NftGameInfo storage nftInfo = gamesInfo[i];
+            allNFTs[i] = nftInfo;
+        }
+
+        return allNFTs;
     }
 
     // Función para que el propietario retire los fondos acumulados
