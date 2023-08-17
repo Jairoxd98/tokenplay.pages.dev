@@ -34,6 +34,7 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
 
     // Contador autoincremental, cada número será un juego (token)
     uint256 public nextTokenId = 0;
+
     // Estructura, donde por cada juego definiremos el precio
     mapping(uint256 => NftGameInfo) public gamesInfo;
     mapping(address => EnumerableSet.UintSet) private purchasedNFTs;
@@ -61,8 +62,8 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
 
         // Calculamos los porcentajes que se lleva cada parte y hacemos la transferencia de los tokens
         uint256 paymentAmount = price;
-        uint256 gameOwner = paymentAmount.mul(royaltyPercentage).div(100); // royaltypercentage para el game owner
-        uint256 tokenPlay = paymentAmount.sub(gameOwner);  // el restante para tokenplay
+        uint256 tokenPlay = paymentAmount.mul(royaltyPercentage).div(100); // royaltypercentage para token play
+        uint256 gameOwner = paymentAmount.sub(tokenPlay);  // el restante para game owner
 
         payable(owner()).transfer(tokenPlay);
         payable(gamesInfo[tokenId].gameOwnerAddress).transfer(gameOwner);
