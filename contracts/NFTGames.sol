@@ -55,6 +55,7 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         require(tokenId >= 0 && tokenId < nextTokenId, "Invalid token ID");
         uint256 price = gamesInfo[tokenId].price;
         require(msg.value >= price, "Insufficient funds");
+        require(gamesInfo[tokenId].gameRelease <= block.timestamp, "Game not released yet");
 
         // Minteamos el NFT al comprador y registramos al array de juegos que tiene comprados (si el Id ya existe no lo registramos de nuevo)
         _mint(msg.sender, tokenId, 1, "");
@@ -99,8 +100,10 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         NftGameInfo[] memory allNFTs = new NftGameInfo[](nextTokenId);
 
         for (uint256 i = 0; i < nextTokenId; i++) {
-            NftGameInfo storage nftInfo = gamesInfo[i];
-            allNFTs[i] = nftInfo;
+            if (gamesInfo[i].gameRelease <= block.timestamp) {
+                NftGameInfo storage nftInfo = gamesInfo[i];
+                allNFTs[i] = nftInfo;
+            }
         }
 
         return allNFTs;
@@ -113,7 +116,7 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
 
         for (uint256 i = 0; i < nextTokenId; i++) {
             NftGameInfo storage nftInfo = gamesInfo[i];
-            if(keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
                 matchingCount++;
             }
         }
@@ -123,7 +126,7 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
 
         for (uint256 i = 0; i < nextTokenId; i++) {
             NftGameInfo storage nftInfo = gamesInfo[i];
-            if(keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
                 matchingNFTs[currentIndex] = nftInfo;
                 currentIndex++;
             }
