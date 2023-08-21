@@ -157,4 +157,9 @@ contract NFTGames is ERC1155, ERC1155URIStorage, Ownable {
         require(tokenId > 0 && tokenId < nextTokenId, "Invalid token ID");
         return gamesInfo[tokenId].imageUrl;
     }
+
+    function approveMarketplace(address marketplace) external {
+        require(marketplace != address(0), "The marketplace address is incorrect");
+        setApprovalForAll(marketplace, true);
+    }
 }
