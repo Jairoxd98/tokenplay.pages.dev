@@ -9,8 +9,14 @@ module.exports = async function (callback) {
         await _TOKENPLAY.flipMintState();
     }
 
-    await _TOKENPLAY.mint(game1, 10, { value: 10000000000000000 });
-    await _TOKENPLAY.mint(game2, 10, { value: 10000000000000000 });
+    let accounts = await web3.eth.getAccounts();
+    //console.log(accounts);
+ 
+    let priceNFT = web3.utils.toBN("100000000000000000");
+    //console.log(priceNFT);
+    await _TOKENPLAY.addNFT(10001,priceNFT,accounts[0],3);
+
+    await _TOKENPLAY.purchaseNFT(10001, {from: accounts[1], value: 100000000000000000 });
 
     await _TOKENPLAY.flipMintState();
 
