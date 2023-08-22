@@ -14,7 +14,6 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    uint256 public royaltyPercentage = 10; // % royalties
     bool public mintIsActive = false;
 
     // Estructura para guardar los datos relevantes del NFT
@@ -23,6 +22,8 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
         uint256 price;
         address gameOwnerAddress;
         uint256 supply;
+        uint256 tokenPlayRoyaltyPercentage;
+        uint256 gameRelease;
     }
 
     // Estructura para devolver los juegos que ha comprado un usuario y la cantidad que tiene de cada juego
@@ -57,17 +58,19 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     }
 
     // Función para añadir un juego (crear un token)
-    function addNFT(uint256 tokenId,uint256 price, address gameOwnerAddress, uint256 supply ) external onlyOwner {
+    function addNFT(uint256 tokenId,uint256 price, address gameOwnerAddress, uint256 supply, uint256 tokenPlayRoyaltyPercentage, uint256 gameRelease ) external onlyOwner {
         require(!_exists(tokenId), "Token ID already exists");
         require(price > 0, "Invalid price");
         require( gameOwnerAddress != address(0), "Invalid address");
         require(supply > 0, "Invalid supply");
+        require(tokenPlayRoyaltyPercentage >= 0, "Invalid percentage royalty");
+        require(gameRelease >= 0, "Time must be positive");
 
         // Contabilizamos el juego añadido
         nGames[nextTokenId] = tokenId;
         nextTokenId = nextTokenId.add(1);
 
-        gamesInfo[tokenId] = NftGameInfo(tokenId, price, gameOwnerAddress, supply);
+        gamesInfo[tokenId] = NftGameInfo(tokenId, price, gameOwnerAddress, supply, tokenPlayRoyaltyPercentage, gameRelease);
 
     }
 
@@ -79,7 +82,8 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
         uint256 price = gamesInfo[tokenId].price;
         require(msg.value >= price, "Insufficient funds"); 
         require(gamesInfo[tokenId].supply > 0, "Insufficient supply. It's over.");
-
+        require(gamesInfo[tokenId].gameRelease <= block.timestamp, "Game not released yet");
+        
         // Minteamos el NFT al comprador y registramos al array de juegos que tiene comprados (si el Id ya existe no lo registramos de nuevo)
         _mint(msg.sender, tokenId, 1, "");
         if (!purchasedNFTs[msg.sender].contains(tokenId)) {
@@ -97,7 +101,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
 
         // Calculamos los porcentajes que se lleva cada parte y hacemos la transferencia de los tokens
         uint256 paymentAmount = price;
-        uint256 tokenPlay = paymentAmount.mul(royaltyPercentage).div(100); // royaltypercentage para token play
+        uint256 tokenPlay = paymentAmount.mul(gamesInfo[tokenId].tokenPlayRoyaltyPercentage).div(100); // royaltypercentage para token play
         uint256 gameOwner = paymentAmount.sub(tokenPlay);  // el restante para game owner
 
         payable(owner()).transfer(tokenPlay);
@@ -114,6 +118,8 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     // Funcion para obtener los juegos que ha comprado un usuario
     function getPurchasedNFTs(address account) external view returns (PurchasedNft[] memory) {
         require( account != address(0), "Invalid address");
+        uint256 purchasedCount = purchasedNFTs[account].length();
+        require(purchasedCount > 0, "The user has not purchased any NFTs");
 
         PurchasedNft[] memory accountGames = new PurchasedNft[](purchasedNFTs[account].length());
 
@@ -133,22 +139,19 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
         NftGameInfo[] memory allNFTs = new NftGameInfo[](nextTokenId);
 
         for (uint256 i = 0; i < nextTokenId; i++) {
-            NftGameInfo storage nftInfo = gamesInfo[nGames[i]]; 
-            allNFTs[i] = nftInfo;
+            if (gamesInfo[nGames[i]].gameRelease <= block.timestamp) {
+                NftGameInfo storage nftInfo = gamesInfo[nGames[i]]; 
+                allNFTs[i] = nftInfo;
+            }
         }
 
         return allNFTs;
     }
-    
-    // Función para que el propietario retire los fondos acumulados
-    function withdrawBalance() external onlyOwner {
-        payable(owner()).transfer(address(this).balance);
-    }
 
     // Función para cambiar el porcentaje de royalty que nos llevamos
-    function setRoyaltyPercentage(uint256 percentage) public onlyOwner {
-        require(percentage >= 0, "Must be a positive number");
-        royaltyPercentage = percentage;
+    function setRoyaltyPercentage(uint256 tokenId, uint256 royaltyPercentage) public onlyOwner {
+        require(royaltyPercentage >= 0, "Must be a positive number");
+        gamesInfo[tokenId].tokenPlayRoyaltyPercentage = royaltyPercentage;
     }
 
     // Funcion para cambiar el precio del juego
@@ -186,5 +189,31 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
         require(marketplace != address(0), "The marketplace address is incorrect");
         setApprovalForAll(marketplace, true);
     }
+    /*
+    // Función para obtener los juegos de una categoria
+    function getCategoryNFTs(string memory category) external view returns (NftGameInfo[] memory) {
+        NftGameInfo[] memory matchingNFTs;
+        uint256 matchingCount = 0;
 
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+                matchingCount++;
+            }
+        }
+
+        matchingNFTs = new NftGameInfo[](matchingCount);
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+                matchingNFTs[currentIndex] = nftInfo;
+                currentIndex++;
+            }
+        }
+
+        return matchingNFTs;
+    }
+    */
 }
