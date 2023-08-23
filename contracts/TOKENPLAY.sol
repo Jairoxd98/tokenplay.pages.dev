@@ -7,9 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 
-contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
+contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -39,8 +41,10 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     // Contador autoincremental, cada número será un juego (token)
     uint256 public nextTokenId = 0;
 
-    // Estructura, donde por cada juego definiremos el precio
+    // Estructura, donde por cada juego definiremos sus atributos
     mapping(uint256 => NftGameInfo) public gamesInfo;
+
+    // Estructura donde registraremos los juegos vendidos
     mapping(address => EnumerableSet.UintSet) private purchasedNFTs;
 
     // Contador de juegos
@@ -49,8 +53,21 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     // Estructura para definir el supply de cada juego
     mapping(uint256 => uint256) public _totalSupply;
 
-    // Evento para notificar que se ha realizado el mint
+    // EVENTOS
+    // Notificar que se ha añadido un juego
+    event NFTAdded(uint256 indexed tokenId, uint256 price, address indexed gameOwnerAddress, uint256 supply, uint256 tokenPlayRoyaltyPercentage, uint256 gameRelease);
+    // Notificar que se ha realizado el mint
     event Purchased(address indexed minter, uint256 indexed tokenId);
+    // Modificado el porcentaje de royalty
+    event RoyaltyPercentageChanged(uint256 indexed tokenId, uint256 newRoyaltyPercentage);
+    // Modificado el precio del juego
+    event NFTPriceChanged(uint256 indexed tokenId, uint256 newPrice);
+    // Aprobación mercado secundario
+    event MarketplaceApproved(address indexed marketplace);
+    // Modificación URI base
+    event BaseURISet(string newBaseURI);
+    // Modificar estado mint
+    event MintingStateToggled(bool newState);
 
     // Función para comprobar que existe el token
     function _exists(uint256 tokenTest) internal view virtual returns (bool) {
@@ -62,6 +79,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
         require(!_exists(tokenId), "Token ID already exists");
         require(price > 0, "Invalid price");
         require( gameOwnerAddress != address(0), "Invalid address");
+        require(gameOwnerAddress != address(this));
         require(supply > 0, "Invalid supply");
         require(tokenPlayRoyaltyPercentage >= 0, "Invalid percentage royalty");
         require(gameRelease >= 0, "Time must be positive");
@@ -72,10 +90,11 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
 
         gamesInfo[tokenId] = NftGameInfo(tokenId, price, gameOwnerAddress, supply, tokenPlayRoyaltyPercentage, gameRelease);
 
+        emit NFTAdded(tokenId, price,gameOwnerAddress,supply, tokenPlayRoyaltyPercentage, gameRelease);
     }
 
     // Función para comprar un juego (un token)
-    function purchaseNFT(uint256 tokenId) external payable {
+    function purchaseNFT(uint256 tokenId) external payable nonReentrant whenNotPaused {
         require(mintIsActive, "Mint must be active to mint");
         require(nextTokenId > 0, "No games created");
         require(_exists(tokenId), "Game ID must be created");
@@ -149,16 +168,18 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     }
 
     // Función para cambiar el porcentaje de royalty que nos llevamos
-    function setRoyaltyPercentage(uint256 tokenId, uint256 royaltyPercentage) public onlyOwner {
-        require(royaltyPercentage >= 0, "Must be a positive number");
+    function setRoyaltyPercentage(uint256 tokenId, uint256 royaltyPercentage) public onlyOwner whenNotPaused {
+        require(royaltyPercentage >= 0 && royaltyPercentage <= 100, "Invalid commission percentage");
         gamesInfo[tokenId].tokenPlayRoyaltyPercentage = royaltyPercentage;
+        emit RoyaltyPercentageChanged(tokenId, royaltyPercentage);
     }
 
     // Funcion para cambiar el precio del juego
-    function setMintPrice(uint256 tokenId, uint256 _mintPrice) public onlyOwner {
+    function setMintPrice(uint256 tokenId, uint256 _mintPrice) public onlyOwner whenNotPaused {
         require(_exists(tokenId), "Game ID must be created");
         require(_mintPrice >= 0, "The price must be positive");
         gamesInfo[tokenId].price = _mintPrice;
+        emit NFTPriceChanged(tokenId, _mintPrice);
     }
 
     // Funcion para saber el supply de un juego
@@ -168,8 +189,9 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     }
 
     // Función para activar o desactivar la compra de juegos (tokens)
-    function flipMintState() public onlyOwner {
+    function flipMintState() public onlyOwner whenNotPaused {
         mintIsActive = ! mintIsActive;
+        emit MintingStateToggled(mintIsActive);
     }
 
     // Funcion para obtener el URI de un juego
@@ -180,14 +202,17 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
     }
 
     // Función para modificar el URI del juego
-    function setBaseURI(string memory baseURI) public onlyOwner {
+    function setBaseURI(string memory baseURI) public onlyOwner whenNotPaused {
+        require(keccak256(abi.encodePacked(baseURI)) != keccak256(abi.encodePacked(uri(0))), "The provided URI is already set.");
         _setBaseURI(baseURI);
+        emit BaseURISet(baseURI);
     }
 
     // Funcion para dar de alta el mercado secundario
-    function approveMarketplace(address marketplace) external onlyOwner{
+    function approveMarketplace(address marketplace) external onlyOwner whenNotPaused {
         require(marketplace != address(0), "The marketplace address is incorrect");
         setApprovalForAll(marketplace, true);
+        emit MarketplaceApproved(marketplace);
     }
     /*
     // Función para obtener los juegos de una categoria

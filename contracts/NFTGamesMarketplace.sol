@@ -7,20 +7,27 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "./NFTGames.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "./TOKENPLAY.sol";
 
-contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
+contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    NFTGames private nftContract; // Referencia al contrato original
+    TOKENPLAY private nftContract; // Referencia al contrato original
 
     constructor(address _nftContract) {
-        nftContract = NFTGames(_nftContract);
+        nftContract = TOKENPLAY(_nftContract);
     }
 
     // Contador autoincremental, cada número será una venta
     uint256 public nextSaleId = 0;
+    // % royalties
+    uint256 public commissionPercentage = 5;
+
+    // Enum para el estado de la venta
+    enum SaleStatus { Listed, Sold, Canceled }
 
     // Estructura para poner a la venta un juego
     struct Sale {
@@ -29,40 +36,62 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
         address seller;
         uint256 price;
         uint256 arrayPosition;
-        bool canceled;
-        bool selled;
+        SaleStatus status;
     }
 
     mapping(uint256 => Sale) public salesInfo;
     Sale[] public sales;
 
+    // EVENTOS
+    // Publicación de la venta de un juego
+    event SaleCreated(uint256 indexed saleId, uint256 indexed tokenId, address indexed seller, uint256 price);
+    // Cancelación de una publicación
+    event SaleCanceled(uint256 indexed saleId, address indexed seller);
+    // Cuando alguien compra un juego en el mercado
+    event GamePurchasedFromMarketplace(uint256 indexed saleId, uint256 indexed tokenId, address indexed buyer, uint256 purchasePrice);
+    // Modificar precio de venta
+    event SalePriceUpdated(uint256 indexed saleId, uint256 newPrice, address indexed seller);
+    // Modificar % royalty
+    event CommissionUpdated(uint256 newCommissionPercentage);
+
     // Crear una venta de juego
-    function createSale(uint256 tokenId, uint256 price) payable external {
+    function createSale(uint256 tokenId, uint256 price) external payable nonReentrant whenNotPaused {
         require(nftContract.balanceOf(msg.sender, tokenId) > 0, "You don't own this NFT");
+        require(price > 0, "The price must be positive");
+        require(!isTokenOnSale(tokenId), "Token is already on sale");
 
         nftContract.safeTransferFrom(msg.sender, address(this), tokenId, 1, "");
 
         uint256 saleId = nextSaleId;
         nextSaleId = nextSaleId.add(1);
 
-        Sale memory sale = Sale({saleId: saleId, tokenId: tokenId, seller: msg.sender, price: price, arrayPosition: sales.length, canceled: false, selled: false});
+        Sale memory sale = Sale({saleId: saleId, tokenId: tokenId, seller: msg.sender, price: price, arrayPosition: sales.length, status: SaleStatus.Listed});
         sales.push(sale);
         salesInfo[saleId] = sale;
     }
 
-    function cancelSale(uint256 saleId) payable external {
+    function isTokenOnSale(uint256 tokenId) internal view returns (bool) {
+        for (uint256 i = 0; i < sales.length; i++) {
+            if (sales[i].tokenId == tokenId && sales[i].status == SaleStatus.Listed) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function cancelSale(uint256 saleId) payable external whenNotPaused {
         require(saleId >= 0, "Invalid sale id");
 
         Sale storage saleMapping = salesInfo[saleId];
         require(saleMapping.seller == msg.sender, "You are not the seller");
-        require(saleMapping.canceled == false, "The sale has already been canceled");
-        require(saleMapping.selled == false, "The sale has been sold");
+        require(saleMapping.status != SaleStatus.Canceled, "The sale has already been canceled");
+        require(saleMapping.status != SaleStatus.Sold, "The sale has been sold");
         require(saleMapping.arrayPosition < sales.length, "Strange error, contact with administrators (1)");
 
         Sale memory saleArray = sales[saleMapping.arrayPosition];
         require(saleMapping.saleId == saleArray.saleId, "Strange error, contact with administrators (2)");
 
-        saleMapping.canceled = true;
+        saleMapping.status = SaleStatus.Canceled;
         // Reorganizar el array moviendo el último elemento al lugar del elemento eliminado
         if (saleMapping.arrayPosition < sales.length - 1) {
             Sale storage lastSale = sales[sales.length - 1];
@@ -77,14 +106,15 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
         sales.pop();
 
         nftContract.safeTransferFrom(address(this), msg.sender, saleMapping.tokenId, 1, "");
+        emit SaleCanceled(saleId, msg.sender);
     }
 
-    function purchaseFromMarketplace(uint256 saleId) external payable {
+    function purchaseFromMarketplace(uint256 saleId) external payable whenNotPaused {
         require(saleId >= 0, "Ivalid sale id");
 
         Sale storage saleMapping = salesInfo[saleId];
-        require(saleMapping.canceled == false, "The sale is canceled");
-        require(saleMapping.selled == false, "The sale is selled");
+        require(saleMapping.status != SaleStatus.Canceled, "The sale has already been canceled");
+        require(saleMapping.status != SaleStatus.Sold, "The sale has been sold");
         require(msg.value >= saleMapping.price, "Insufficient funds");
         require(saleMapping.arrayPosition < sales.length, "Strange error, contact with administrators (1)");
 
@@ -92,7 +122,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
         require(saleMapping.saleId == saleArray.saleId, "Strange error, contact with administrators (2)");
 
         // Reorganizar el array moviendo el último elemento al lugar del elemento eliminado
-        saleMapping.selled = true;
+        saleMapping.status = SaleStatus.Sold;
         if (saleMapping.arrayPosition < sales.length - 1) {
             Sale storage lastSale = sales[sales.length - 1];
 
@@ -106,10 +136,19 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
         sales.pop();
 
         nftContract.safeTransferFrom(address(this), msg.sender, saleMapping.tokenId, 1, "");
-        payable(saleMapping.seller).transfer(saleMapping.price);
+
+        // Deducción de la comisión y transferencia al propietario del contrato
+        uint256 commissionAmount = saleMapping.price.mul(commissionPercentage).div(100);
+        uint256 sellerAmount = saleMapping.price.sub(commissionAmount);
+
+        payable(saleMapping.seller).transfer(sellerAmount);
+        payable(owner()).transfer(commissionAmount);
+
+        // Si el usuario ha pagado de mas, le devolvemos el dinero
         if (msg.value > saleMapping.price) {
             payable(msg.sender).transfer(msg.value - saleMapping.price);
         }
+        emit GamePurchasedFromMarketplace(saleId, saleMapping.tokenId, msg.sender, saleMapping.price);
     }
 
     // Función para obtener los juegos en venta
@@ -118,7 +157,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
 
         // Contar la cantidad de ventas activas
         for (uint256 i = 0; i < sales.length; i++) {
-            if (!sales[i].canceled && !sales[i].selled) {
+            if (sales[i].status == SaleStatus.Listed) {
                 activeSalesCount++;
             }
         }
@@ -129,12 +168,36 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder  {
         // Llenar el array con las ventas activas
         uint256 activeIndex = 0;
         for (uint256 i = 0; i < sales.length; i++) {
-            if (!sales[i].canceled && !sales[i].selled) {
+            if (sales[i].status == SaleStatus.Listed) {
                 activeSales[activeIndex] = sales[i];
                 activeIndex++;
             }
         }
 
         return activeSales;
+    }
+
+    // Función para actualizar el precio de venta
+    function updateSalePrice(uint256 saleId, uint256 newPrice) external {
+        require(saleId >= 0, "Invalid sale id");
+        require(newPrice > 0, "The price must be positive");
+
+        Sale storage saleMapping = salesInfo[saleId];
+        require(saleMapping.seller == msg.sender, "You are not the seller");
+        require(saleMapping.status == SaleStatus.Listed, "The sale is not active");
+    
+        saleMapping.price = newPrice;
+
+        emit SalePriceUpdated(saleId, newPrice, msg.sender);
+    }
+
+    function setCommissionPercentage(uint256 _commissionPercentage) external onlyOwner {
+        require(_commissionPercentage >= 0 && _commissionPercentage <= 100, "Invalid commission percentage");
+        commissionPercentage = _commissionPercentage;
+        emit CommissionUpdated(_commissionPercentage);
+    }   
+
+    function getCommissionPercentage() external view returns (uint256) {
+        return commissionPercentage;
     }
 }
