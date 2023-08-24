@@ -99,10 +99,10 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
         require(nextTokenId > 0, "No games created");
         require(_exists(tokenId), "Game ID must be created");
         uint256 price = gamesInfo[tokenId].price;
-        require(msg.value >= price, "Insufficient funds"); 
+        require(msg.value >= price, "Insufficient funds");
         require(gamesInfo[tokenId].supply > 0, "Insufficient supply. It's over.");
         require(gamesInfo[tokenId].gameRelease <= block.timestamp, "Game not released yet");
-        
+
         // Minteamos el NFT al comprador y registramos al array de juegos que tiene comprados (si el Id ya existe no lo registramos de nuevo)
         _mint(msg.sender, tokenId, 1, "");
         if (!purchasedNFTs[msg.sender].contains(tokenId)) {
@@ -133,7 +133,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
 
         emit Purchased(msg.sender, tokenId);
     }
-    
+
     // Funcion para obtener los juegos que ha comprado un usuario
     function getPurchasedNFTs(address account) external view returns (PurchasedNft[] memory) {
         require( account != address(0), "Invalid address");
@@ -150,7 +150,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
 
         return accountGames;
     }
-    
+
     // Función para obtener todos los juegos disponibles
     function getNFTs() external view returns (NftGameInfo[] memory) {
         require(nextTokenId > 0, "No games created");
@@ -159,7 +159,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
 
         for (uint256 i = 0; i < nextTokenId; i++) {
             if (gamesInfo[nGames[i]].gameRelease <= block.timestamp) {
-                NftGameInfo storage nftInfo = gamesInfo[nGames[i]]; 
+                NftGameInfo storage nftInfo = gamesInfo[nGames[i]];
                 allNFTs[i] = nftInfo;
             }
         }
@@ -214,6 +214,45 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
         setApprovalForAll(marketplace, true);
         emit MarketplaceApproved(marketplace);
     }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 amount,
+        bytes memory data
+    ) public override {
+        // Only contracts can do this action
+        require(isContract(msg.sender), "You can't do a transfer");
+        // Validate if the sender sends something from his address or if its different, then validat if its allow to do it
+        require(from == msg.sender || isApprovedForAll(from, msg.sender), "Transfer not allowed");
+
+        // Remove NFT from owner if is the last NFT of this tokenId it owns
+        if (purchasedNFTs[from].contains(tokenId) && balanceOf(from, tokenId) == 1) {
+            purchasedNFTs[from].remove(tokenId);
+        }
+
+        // Add NFT to receiver if is the first of this tokenId it owns
+        if (!purchasedNFTs[to].contains(tokenId) && balanceOf(to, tokenId) == 0) {
+            purchasedNFTs[to].add(tokenId);
+        }
+
+        // Call the original safeTransferFrom function
+        super.safeTransferFrom(from, to, tokenId, amount, data);
+    }
+
+    function safeBatchTransferFrom(address, address, uint256[] memory, uint256[] memory, bytes memory) public pure override {
+        revert("SafeBatchTransferFrom is disabled");
+    }
+
+    function isContract(address _addr) internal view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
+    }
+
     /*
     // Función para obtener los juegos de una categoria
     function getCategoryNFTs(string memory category) external view returns (NftGameInfo[] memory) {

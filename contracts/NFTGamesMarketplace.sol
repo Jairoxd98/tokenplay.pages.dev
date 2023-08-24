@@ -110,7 +110,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
     }
 
     function purchaseFromMarketplace(uint256 saleId) external payable whenNotPaused {
-        require(saleId >= 0, "Ivalid sale id");
+        require(saleId >= 0, "Invalid sale id");
 
         Sale storage saleMapping = salesInfo[saleId];
         require(saleMapping.status != SaleStatus.Canceled, "The sale has already been canceled");
@@ -185,7 +185,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         Sale storage saleMapping = salesInfo[saleId];
         require(saleMapping.seller == msg.sender, "You are not the seller");
         require(saleMapping.status == SaleStatus.Listed, "The sale is not active");
-    
+
         saleMapping.price = newPrice;
 
         emit SalePriceUpdated(saleId, newPrice, msg.sender);
@@ -195,7 +195,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         require(_commissionPercentage >= 0 && _commissionPercentage <= 100, "Invalid commission percentage");
         commissionPercentage = _commissionPercentage;
         emit CommissionUpdated(_commissionPercentage);
-    }   
+    }
 
     function getCommissionPercentage() external view returns (uint256) {
         return commissionPercentage;
