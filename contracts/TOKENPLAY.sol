@@ -214,6 +214,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
     // Funcion para dar de alta el mercado secundario
     function approveMarketplace(address marketplace) external onlyOwner whenNotPaused {
         require(marketplace != address(0), "The marketplace address is incorrect");
+        require(!isApprovedForAll(address(this), marketplace), "The marketplace is already approved");
         setApprovalForAll(marketplace, true);
         emit MarketplaceApproved(marketplace);
     }

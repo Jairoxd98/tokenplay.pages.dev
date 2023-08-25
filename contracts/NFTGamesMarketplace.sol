@@ -181,6 +181,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
     function updateSalePrice(uint256 saleId, uint256 newPrice) external {
         require(saleId >= 0, "Invalid sale id");
         require(newPrice > 0, "The price must be positive");
+        require(salesInfo[saleId].status == SaleStatus.Listed, "Must be listed");
 
         Sale storage saleMapping = salesInfo[saleId];
         require(saleMapping.seller == msg.sender, "You are not the seller");
