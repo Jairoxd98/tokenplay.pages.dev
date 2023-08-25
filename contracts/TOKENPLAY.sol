@@ -90,6 +90,9 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
 
         gamesInfo[tokenId] = NftGameInfo(tokenId, price, gameOwnerAddress, supply, tokenPlayRoyaltyPercentage, gameRelease);
 
+        // Guardamos el supply del NFT
+        _totalSupply[tokenId] = gamesInfo[tokenId].supply;
+
         emit NFTAdded(tokenId, price,gameOwnerAddress,supply, tokenPlayRoyaltyPercentage, gameRelease);
     }
 
