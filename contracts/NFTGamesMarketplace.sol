@@ -58,7 +58,6 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
     function createSale(uint256 tokenId, uint256 price) external payable nonReentrant whenNotPaused {
         require(nftContract.balanceOf(msg.sender, tokenId) > 0, "You don't own this NFT");
         require(price > 0, "The price must be positive");
-        require(!isTokenOnSale(tokenId), "Token is already on sale");
 
         nftContract.safeTransferFrom(msg.sender, address(this), tokenId, 1, "");
 
@@ -68,15 +67,6 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         Sale memory sale = Sale({saleId: saleId, tokenId: tokenId, seller: msg.sender, price: price, arrayPosition: sales.length, status: SaleStatus.Listed});
         sales.push(sale);
         salesInfo[saleId] = sale;
-    }
-
-    function isTokenOnSale(uint256 tokenId) internal view returns (bool) {
-        for (uint256 i = 0; i < sales.length; i++) {
-            if (sales[i].tokenId == tokenId && sales[i].status == SaleStatus.Listed) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function cancelSale(uint256 saleId) payable external whenNotPaused {
