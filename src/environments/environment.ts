@@ -4,8 +4,8 @@
 
 export const environment = {
   production: false,
-  networkId: 11155111,
-  provider: 'https://sepolia.infura.io/v3/d09825f256ae4705a74fdee006040903',
+  provider: 'http://localhost:7545', // Dirección predeterminada de Ganache
+  networkId: '5777'
 };
 
 /*
