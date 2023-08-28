@@ -13,6 +13,29 @@ const config = {
       "zlib": require.resolve("browserify-zlib")
     }
   },
+  module: {
+    rules: [
+      {
+        test: /\.scss$/,
+        use: [
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                ident: 'postcss',
+                syntax: 'postcss-scss',
+                plugins: [
+                  require('postcss-import'),
+                  require('tailwindcss'),
+                  require('autoprefixer'),
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ], // <-- Cierre del array
+  },
   plugins: [
     new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
     new webpack.ProvidePlugin({ process: 'process/browser' }),

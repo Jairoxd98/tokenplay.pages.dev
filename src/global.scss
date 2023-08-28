@@ -18,15 +18,19 @@
 @import "@ionic/angular/css/typography.css";
 @import '@ionic/angular/css/display.css';
 
-/* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-#main-content{
-  margin-top:90px;
-  margin-left: 35px;
-  margin-right: 35px;
+/* Optional CSS utils that can be commented out */
+// @import "@ionic/angular/css/padding.css";
+// @import "@ionic/angular/css/float-elements.css";
+// @import "@ionic/angular/css/text-alignment.css";
+// @import "@ionic/angular/css/text-transformation.css";
+// @import "@ionic/angular/css/flex-utils.css";
+
+.toastClass{
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    text-align: center !important;
 }

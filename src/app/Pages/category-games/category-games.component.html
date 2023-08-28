@@ -1,0 +1,30 @@
+<div class="flex flex-col gap-4 mt-16 px-8 overflow-auto">
+  <h1 class="text-white text-5xl font-bold mt-4">Games Category XXXXXXXX</h1>
+  <div class="w-full flex justify-start items-center gap-4 my-4">
+    <button
+      class="w-52 shadow-lg bg-red-500 py-4 px-12 rounded-full text-white font-bold transition-all transform hover:scale-105"
+      [ngClass]="ordering === '-metacritic' ? 'bg-red-500' : 'bg-transparent border border-solid'"
+      type="button"
+      (click)="seeGamesFilter('-metacritic')"
+    >
+      Popular
+    </button>
+    <button
+      class="w-52 py-4 px-12 rounded-full text-white font-bold transition-all transform hover:scale-105"
+      [ngClass]="ordering === '-rating' ? 'bg-red-500' : 'bg-transparent border border-solid'"
+      type="button"
+      (click)="seeGamesFilter('-rating')"
+    >
+      Best Rating
+    </button>
+  </div>
+  <app-card-list [games]="allGames.results"></app-card-list>
+  <div class="w-full flex justify-center items-center mb-8">
+    <button
+      class="border border-solid border-red-500 py-4 px-12 rounded-full text-red-500 flex items-center gap-2 font-bold transition-all transform hover:scale-105 hover:bg-red-500 hover:text-white"
+      (click)="seeMoreGames()"
+    >
+      Show More <ion-icon name="caret-down-outline"></ion-icon>
+    </button>
+  </div>
+</div>

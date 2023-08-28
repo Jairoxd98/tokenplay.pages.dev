@@ -1,0 +1,29 @@
+<ion-content>
+  <div *ngIf="!isAddingGame" class="w-[87%] h-full flex flex-col justify-start items-center ml-[250px]">
+    <div class="flex justify-center items-center gap-4 mt-20 mb-4 text-5xl">
+      <h1 class="">On Sale</h1>
+      <ion-icon class="text-red-500 cursor-pointer hover:text-red-600" name="add-circle-outline" (click)="addGame()"></ion-icon>
+    </div>
+    <div class="w-full h-full grid grid-cols-5 gap-4 mb-12">
+      <app-card *ngFor="let game of gamesOnSale" [game]="game"></app-card>
+    </div>
+  </div>
+  <div *ngIf="isAddingGame" class="w-[87%] h-full flex flex-col justify-start items-center ml-[250px]">
+    <form class="w-[500px] mt-20 rounded-xl flex flex-col gap-8 shadow-lg p-8">
+      <div class="w-full flex justify-center text-2xl relative">
+        <h1>Game for sale</h1>
+        <ion-icon class="absolute left-0 cursor-pointer" name="arrow-back-outline" (click)="gameAdded()"></ion-icon>
+      </div>
+      <div class="flex flex-col">
+        <label>Name</label>
+        <input class="rounded-lg bg-transparent" type="text" name="" id="">
+      </div>
+      <div class="flex flex-col">
+        <label>Price</label>
+        <input class="rounded-lg bg-transparent" type="number" name="" id="">
+      </div>
+      <button class="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"> Put on sale</button>
+    </form>
+  </div>
+</ion-content>
+

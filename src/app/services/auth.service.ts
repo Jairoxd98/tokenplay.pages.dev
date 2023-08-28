@@ -1,125 +1,71 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { DOCUMENT } from '@angular/common';
+import Web3 from 'web3';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService
 {
-  private window: any;
-  address : any;
-  cuttedAddress: any;
+  private web3!: Web3;
 
-  private isUserLoggedInSubject = new BehaviorSubject<boolean>(false);
-  public isUserLoggedIn$ = this.isUserLoggedInSubject.asObservable();
+  private loggedIn = new BehaviorSubject<boolean>(false);
+  loggedIn$ = this.loggedIn.asObservable();
 
-  constructor(@Inject(DOCUMENT) private document: Document){
-    this.window = document.defaultView;
-    this.address = localStorage.getItem('address');
+  constructor(private router: Router) {
+    this.init()
   }
 
-  isMetamaskReady(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      const checkMetamask = () => {
-        if (this.window.ethereum != null && this.window.ethereum._state.accounts != null) {
-          resolve(true);
+  async init() {
+    if (window.ethereum) {
+      this.web3 = new Web3(window.ethereum);
+      window.ethereum.on('accountsChanged', (accounts: string | any[]) => {
+        if (accounts.length > 0) {
+          this.loggedIn.next(true);
+        } else {
+          // Si esta conectado a la pagina pero el usuario desde metamask la desconecta, automaticamente lo enviamos a la home
+          if (this.loggedIn) this.router.navigate(['/home']); 
+          this.loggedIn.next(false);
         }
-        else if(this.window.ethereum == undefined){
-          resolve(false);
-        }
-        else
-        {
-          setTimeout(checkMetamask, 300);
-        }
-      };
-
-      checkMetamask();
-    });
-  }
-
-  async isLoggedIn(){
-    const isReady = await this.isMetamaskReady();
-    if(isReady && this.window.ethereum != null && this.window.ethereum._state.accounts != null &&
-      this.window.ethereum._state.accounts.find((elem: string) => elem == this.address) != undefined)
-    {
-      this.isUserLoggedInSubject.next(true);
+      });
+    } 
+    else {   
+      console.error('MetaMask no detectado!');
     }
-    else{
-      this.isUserLoggedInSubject.next(false);
+
+    //Cuando arranque la pagina hace un check de si tiene la pagina conectada con metamask para no volver a pedir que la conecte.
+    //Le pedimos las wallets si no hay ninguna wallet no esta conectada, si hay aluna wallet si lo esta
+    if (await this.getAccount()) {      
+      this.loggedIn.next(true);
     }
   }
 
-  metamaskInstalled(){
-    return this.window.ethereum != null;
-  }
+  async connect(): Promise<void> {
+    if (!this.web3) return;
 
-  async logIn() {
-    try{
-      let resultLogin = await this.requestLogin();
-      this.isUserLoggedInSubject.next(resultLogin);
-      return true;
-    }
-    catch(ex){
-      this.isUserLoggedInSubject.next(false);
-      return false;
+    const accounts = await this.web3.eth.requestAccounts();
+    if (accounts && accounts.length > 0) {
+      this.loggedIn.next(true);
     }
   }
 
-  private async requestLogin(){
-    return new Promise<boolean>((resolve) => {
-      try
-      {
-        this.window.ethereum.request({method: 'eth_requestAccounts'})
-        .then((accounts:any) => {
-          this.address = accounts[0];
-          localStorage.setItem('address', this.address);
-          resolve(true);
-        })
-        .catch(() => {
-          resolve(false);
-        });
-      }
-      catch(ex){
-        resolve(false);
-      }
-    });
+  async getAccount(): Promise<string | null> {
+    if (!this.web3) {
+      console.error('Web3 no inicializado');
+      return null;
+    }
+
+    const accounts = await this.web3.eth.getAccounts();
+    return accounts.length > 0 ? accounts[0] : null;
   }
 
-  async logOut() {
-    try{
-      let resultLogout = await this.resquestLogout();
-      this.isUserLoggedInSubject.next(!resultLogout);
-      return true;
+  disconnect(): void {
+    if (window.ethereum && window.ethereum.isConnected()) {
+      // Por ahora, MetaMask no tiene una manera nativa de "desconectar". 
+      // Pero puedes resetear tu UI o recargar la página si es necesario.
+      this.loggedIn.next(false);
     }
-    catch(ex){
-      this.isUserLoggedInSubject.next(false);
-      return false;
-    }
-  }
-
-  private async resquestLogout (){
-    return new Promise<boolean>((resolve) => {
-      if (this.window.ethereum) {
-        try {
-
-          this.window.ethereum.request({
-            method: "eth_requestAccounts",
-            params: [
-              {
-                eth_accounts: {}
-              }
-            ]
-          });
-
-          localStorage.removeItem('address');
-
-          resolve(true);
-        } catch (error) {
-          resolve(false);
-        }
-      }
-    });
   }
 }
 

@@ -1,0 +1,14 @@
+<div *ngIf="game" class="relative cursor-pointer h-80 hover:z-10">
+  <div class="absolute group transition-all transform hover:scale-105">
+    <div [ngStyle]="{'background-image': 'url(' + (game.background_image ? game.background_image : 'https://www.pbpusa.org/Shared/img/notfound.png') + ')'}" class="w-80 h-[13rem] bg-center bg-no-repeat bg-cover rounded-t-3xl">
+    </div>
+    <div class="h-32 group-hover:h-44 w-80 bg-zinc-800 rounded-b-3xl flex flex-col gap-2 p-2 transition-all">
+      <div class="flex justify-between items-center">
+        <!-- Contenido adicional -->
+      </div>
+      <h2 class="text-2xl font-bold">{{game.name}}</h2>
+      <p>3.67€</p>
+      <button class="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 p-4 rounded-full">Comprar</button>
+    </div>
+  </div>
+</div>
