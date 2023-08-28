@@ -4,119 +4,284 @@ pragma solidity >=0.8.0 <0.9.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
-contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable {
+
+contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Pausable {
+    using SafeMath for uint256;
     using Strings for uint256;
-
-    string public name = "TOKENPLAY";
-
-    string public symbol = "TKP";
-
-    uint256 public mintPrice = 10000000000000000; // 0.01 ETH
+    using EnumerableSet for EnumerableSet.UintSet;
 
     bool public mintIsActive = false;
 
-    uint256 public royaltyPercentage = 10; // % royalties
+    // Estructura para guardar los datos relevantes del NFT
+    struct NftGameInfo {
+        uint256 tokenId;
+        uint256 price;
+        address gameOwnerAddress;
+        uint256 supply;
+        uint256 tokenPlayRoyaltyPercentage;
+        uint256 gameRelease;
+    }
 
-    uint256 public supplyNFT = 10;
+    // Estructura para devolver los juegos que ha comprado un usuario y la cantidad que tiene de cada juego
+    struct PurchasedNft {
+        NftGameInfo game;
+        uint256 qty;
+    }
 
-    mapping(uint256 => address) public wineries;
-
-    mapping(uint256 => uint256) public _totalSupply;
-
-    mapping(uint256 => uint256) public royaltiesPendingWithdrawal;
-
-    event Minted(address indexed minter, uint256 indexed tokenId);
-
-    constructor (string memory _baseURI /*,uint256 supply*/) ERC1155(_baseURI) {
-        //supplyNFT = supply;
+    constructor(string memory _baseURI) ERC1155(_baseURI) {
         _setBaseURI(_baseURI);
     }
 
-    function setRoyaltyPercentage(uint256 percentage) public onlyOwner {
-        royaltyPercentage = percentage;
-    }    
+    // Contador autoincremental, cada número será un juego (token)
+    uint256 public nextTokenId = 0;
 
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return wineries[tokenId] != address(0);
+    // Estructura, donde por cada juego definiremos sus atributos
+    mapping(uint256 => NftGameInfo) public gamesInfo;
+
+    // Estructura donde registraremos los juegos vendidos
+    mapping(address => EnumerableSet.UintSet) private purchasedNFTs;
+
+    // Contador de juegos
+    mapping(uint256 => uint256) public nGames;
+
+    // Estructura para definir el supply de cada juego
+    mapping(uint256 => uint256) public _totalSupply;
+
+    // EVENTOS
+    // Notificar que se ha añadido un juego
+    event NFTAdded(uint256 indexed tokenId, uint256 price, address indexed gameOwnerAddress, uint256 supply, uint256 tokenPlayRoyaltyPercentage, uint256 gameRelease);
+    // Notificar que se ha realizado el mint
+    event Purchased(address indexed minter, uint256 indexed tokenId);
+    // Modificado el porcentaje de royalty
+    event RoyaltyPercentageChanged(uint256 indexed tokenId, uint256 newRoyaltyPercentage);
+    // Modificado el precio del juego
+    event NFTPriceChanged(uint256 indexed tokenId, uint256 newPrice);
+    // Aprobación mercado secundario
+    event MarketplaceApproved(address indexed marketplace);
+    // Modificación URI base
+    event BaseURISet(string newBaseURI);
+    // Modificar estado mint
+    event MintingStateToggled(bool newState);
+
+    // Función para comprobar que existe el token
+    function _exists(uint256 tokenTest) internal view virtual returns (bool) {
+        return gamesInfo[tokenTest].tokenId == tokenTest;
     }
 
-    function _requireMinted(uint256 tokenId) internal view virtual {
-        require(_exists(tokenId), "Invalid token ID");
+    // Función para añadir un juego (crear un token)
+    function addNFT(uint256 tokenId,uint256 price, address gameOwnerAddress, uint256 supply, uint256 tokenPlayRoyaltyPercentage, uint256 gameRelease ) external onlyOwner {
+        require(!_exists(tokenId), "Token ID already exists");
+        require(price > 0, "Invalid price");
+        require( gameOwnerAddress != address(0), "Invalid address");
+        require(gameOwnerAddress != address(this));
+        require(supply > 0, "Invalid supply");
+        require(tokenPlayRoyaltyPercentage >= 0, "Invalid percentage royalty");
+        require(gameRelease >= 0, "Time must be positive");
+
+        // Contabilizamos el juego añadido
+        nGames[nextTokenId] = tokenId;
+        nextTokenId = nextTokenId.add(1);
+
+        gamesInfo[tokenId] = NftGameInfo(tokenId, price, gameOwnerAddress, supply, tokenPlayRoyaltyPercentage, gameRelease);
+
+        // Guardamos el supply del NFT
+        _totalSupply[tokenId] = gamesInfo[tokenId].supply;
+
+        emit NFTAdded(tokenId, price,gameOwnerAddress,supply, tokenPlayRoyaltyPercentage, gameRelease);
     }
 
-    function setBaseURI(string memory baseURI) public onlyOwner {
-        _setBaseURI(baseURI);
-    }
-
-    function setMintPrice(uint256 _mintPrice) public onlyOwner {
-        mintPrice = _mintPrice;
-    }
-
-    function flipMintState() public onlyOwner {
-        mintIsActive = ! mintIsActive;
-    }
-
-    function withdraw() public onlyOwner {
-        uint balance = address(this).balance;
-
-        payable(msg.sender).transfer(balance);
-    }
-
-    function mint(uint256 tokenId) public payable {
+    // Función para comprar un juego (un token)
+    function purchaseNFT(uint256 tokenId) external payable nonReentrant whenNotPaused {
         require(mintIsActive, "Mint must be active to mint");
-        require(mintPrice == msg.value, "Value sent is not correct");
-        require(!_exists(tokenId), "Game already minted");
-        require(supplyNFT > 0, "The supply must be higher than 0");
+        require(nextTokenId > 0, "No games created");
+        require(_exists(tokenId), "Game ID must be created");
+        uint256 price = gamesInfo[tokenId].price;
+        require(msg.value >= price, "Insufficient funds");
+        require(gamesInfo[tokenId].supply > 0, "Insufficient supply. It's over.");
+        require(gamesInfo[tokenId].gameRelease <= block.timestamp, "Game not released yet");
 
-        wineries[tokenId] = msg.sender;
+        // Minteamos el NFT al comprador y registramos al array de juegos que tiene comprados (si el Id ya existe no lo registramos de nuevo)
+        _mint(msg.sender, tokenId, 1, "");
+        if (!purchasedNFTs[msg.sender].contains(tokenId)) {
+            purchasedNFTs[msg.sender].add(tokenId);
+        }
 
-        _mint(msg.sender, tokenId, supplyNFT, "");
+        // Asignamos el URI al juego con el ID y la extensión
         _setURI(tokenId, string(abi.encodePacked(tokenId.toString(), ".json")));
 
-        _totalSupply[tokenId] = supplyNFT;
+        // Restamos del supply total el juego comprado
+        gamesInfo[tokenId].supply = gamesInfo[tokenId].supply.sub(1);
+        // Guardamos el supply del NFT
+        _totalSupply[tokenId] = gamesInfo[tokenId].supply;
 
-        emit Minted(msg.sender, tokenId);
-    }
-    /*
-    function safeTransferFrom(address from, address to, uint256 tokenId, uint256 amount, bytes memory data) public override {
-        _requireMinted(tokenId);
 
-        // Calcular el monto de royalties a pagar al propietario original
-        uint256 royaltyAmount = (amount * royaltyPercentage) / 100;
-        uint256 transferAmount = amount - royaltyAmount;
+        // Calculamos los porcentajes que se lleva cada parte y hacemos la transferencia de los tokens
+        uint256 paymentAmount = price;
+        uint256 tokenPlay = paymentAmount.mul(gamesInfo[tokenId].tokenPlayRoyaltyPercentage).div(100); // royaltypercentage para token play
+        uint256 gameOwner = paymentAmount.sub(tokenPlay);  // el restante para game owner
 
-        // Transferir el NFT al nuevo propietario
-        _safeTransferFrom(from, to, tokenId, transferAmount, data);
+        payable(owner()).transfer(tokenPlay);
+        payable(gamesInfo[tokenId].gameOwnerAddress).transfer(gameOwner);
 
-        // Pagar los royalties al propietario original
-        //if (royaltyAmount > 0) {
-        //    payable(address(this)).transfer(royaltyAmount);
-        //}
-        // Guardar los royalties en el contrato para que el propietario pueda retirarlos más tarde
-        royaltiesPendingWithdrawal[tokenId] += royaltyAmount;
+        // Si el usuario ha pagado de mas, le devolvemos el dinero
+        if (msg.value > price) {
+            payable(msg.sender).transfer(msg.value - price);
+        }
 
+        emit Purchased(msg.sender, tokenId);
     }
 
-    function withdrawRoyalties(uint256 tokenId) public {
-        require(royaltiesPendingWithdrawal[tokenId] > 0, "No royalties to withdraw");
-        require(msg.sender == wineries[tokenId], "Only the original owner can withdraw royalties");
+    // Funcion para obtener los juegos que ha comprado un usuario
+    function getPurchasedNFTs(address account) external view returns (PurchasedNft[] memory) {
+        require( account != address(0), "Invalid address");
+        uint256 purchasedCount = purchasedNFTs[account].length();
+        require(purchasedCount > 0, "The user has not purchased any NFTs");
 
-        uint256 amount = royaltiesPendingWithdrawal[tokenId];
-        royaltiesPendingWithdrawal[tokenId] = 0; // Resetea el saldo pendiente
+        PurchasedNft[] memory accountGames = new PurchasedNft[](purchasedNFTs[account].length());
 
-        payable(msg.sender).transfer(amount);
+        for (uint256 i = 0; i < purchasedNFTs[account].length(); i++) {
+            uint256 id = purchasedNFTs[account].at(i);
+            accountGames[i].game = gamesInfo[id];
+            accountGames[i].qty = balanceOf(account, id);
+        }
+
+        return accountGames;
     }
-    */
 
+    // Función para obtener todos los juegos disponibles
+    function getNFTs() external view returns (NftGameInfo[] memory) {
+        require(nextTokenId > 0, "No games created");
+
+        NftGameInfo[] memory allNFTs = new NftGameInfo[](nextTokenId);
+
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            if (gamesInfo[nGames[i]].gameRelease <= block.timestamp) {
+                NftGameInfo storage nftInfo = gamesInfo[nGames[i]];
+                allNFTs[i] = nftInfo;
+            }
+        }
+
+        return allNFTs;
+    }
+
+    // Función para cambiar el porcentaje de royalty que nos llevamos
+    function setRoyaltyPercentage(uint256 tokenId, uint256 royaltyPercentage) public onlyOwner whenNotPaused {
+        require(royaltyPercentage >= 0 && royaltyPercentage <= 100, "Invalid commission percentage");
+        gamesInfo[tokenId].tokenPlayRoyaltyPercentage = royaltyPercentage;
+        emit RoyaltyPercentageChanged(tokenId, royaltyPercentage);
+    }
+
+    // Funcion para cambiar el precio del juego
+    function setMintPrice(uint256 tokenId, uint256 _mintPrice) public onlyOwner whenNotPaused {
+        require(_exists(tokenId), "Game ID must be created");
+        require(_mintPrice >= 0, "The price must be positive");
+        gamesInfo[tokenId].price = _mintPrice;
+        emit NFTPriceChanged(tokenId, _mintPrice);
+    }
+
+    // Funcion para saber el supply de un juego
+    function totalSupply(uint256 tokenId) public view returns (uint256) {
+        require(_exists(tokenId), "Game ID must be created");
+        return _totalSupply[tokenId];
+    }
+
+    // Función para activar o desactivar la compra de juegos (tokens)
+    function flipMintState() public onlyOwner whenNotPaused {
+        mintIsActive = ! mintIsActive;
+        emit MintingStateToggled(mintIsActive);
+    }
+
+    // Funcion para obtener el URI de un juego
     function uri(uint256 tokenId) public view virtual override(ERC1155, ERC1155URIStorage) returns (string memory) {
-        _requireMinted(tokenId);
+        require(_exists(tokenId), "Game ID must be created");
 
         return super.uri(tokenId);
     }
 
-    function totalSupply(uint256 tokenId) public view returns (uint256) {
-        return _totalSupply[tokenId];
+    // Función para modificar el URI del juego
+    function setBaseURI(string memory baseURI) public onlyOwner whenNotPaused {
+        require(keccak256(abi.encodePacked(baseURI)) != keccak256(abi.encodePacked(uri(0))), "The provided URI is already set.");
+        _setBaseURI(baseURI);
+        emit BaseURISet(baseURI);
     }
+
+    // Funcion para dar de alta el mercado secundario
+    function approveMarketplace(address marketplace) external  whenNotPaused {
+        require(marketplace != address(0), "The marketplace address is incorrect");
+        require(!isApprovedForAll(address(this), marketplace), "The marketplace is already approved");
+        setApprovalForAll(marketplace, true);
+        emit MarketplaceApproved(marketplace);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 amount,
+        bytes memory data
+    ) public override {
+        // Only contracts can do this action
+        require(isContract(msg.sender), "You can't do a transfer");
+        // Validate if the sender sends something from his address or if its different, then validat if its allow to do it
+        require(from == msg.sender || isApprovedForAll(from, msg.sender), "Transfer not allowed");
+
+        // Remove NFT from owner if is the last NFT of this tokenId it owns
+        if (purchasedNFTs[from].contains(tokenId) && balanceOf(from, tokenId) == 1) {
+            purchasedNFTs[from].remove(tokenId);
+        }
+
+        // Add NFT to receiver if is the first of this tokenId it owns
+        if (!purchasedNFTs[to].contains(tokenId) && balanceOf(to, tokenId) == 0) {
+            purchasedNFTs[to].add(tokenId);
+        }
+
+        // Call the original safeTransferFrom function
+        super.safeTransferFrom(from, to, tokenId, amount, data);
+    }
+
+    function safeBatchTransferFrom(address, address, uint256[] memory, uint256[] memory, bytes memory) public pure override {
+        revert("SafeBatchTransferFrom is disabled");
+    }
+
+    function isContract(address _addr) internal view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
+    }
+
+    /*
+    // Función para obtener los juegos de una categoria
+    function getCategoryNFTs(string memory category) external view returns (NftGameInfo[] memory) {
+        NftGameInfo[] memory matchingNFTs;
+        uint256 matchingCount = 0;
+
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+                matchingCount++;
+            }
+        }
+
+        matchingNFTs = new NftGameInfo[](matchingCount);
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
+            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
+                matchingNFTs[currentIndex] = nftInfo;
+                currentIndex++;
+            }
+        }
+
+        return matchingNFTs;
+    }
+    */
 }
