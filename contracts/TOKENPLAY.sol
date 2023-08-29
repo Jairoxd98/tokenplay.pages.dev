@@ -16,7 +16,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    bool public mintIsActive = false;
+    bool public mintIsActive = true;
 
     // Estructura para guardar los datos relevantes del NFT
     struct NftGameInfo {
