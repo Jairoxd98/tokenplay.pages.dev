@@ -7,10 +7,12 @@
         <!-- Contenido adicional -->
       </div>
       <h2 class="text-2xl font-bold">{{game.name}}</h2>
-      <p>{{game.price}} ETH</p>
-      <button class="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 p-4 rounded-full">
-        Comprar
-        <!-- <a [href]="game.download" target="_blank">Comprar</a> -->
+      <p>{{parseWeiToEth(game.price)}} ETH</p>
+      <button *ngIf="buttonType === 'buy'" class="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 p-4 rounded-full" (click)="buyGame(game.tokenId, game.price)">
+        Buy
+      </button>
+      <button *ngIf="buttonType === 'play'" class="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 p-4 rounded-full">
+        <a [href]="game.download" target="_blank">Play</a>
       </button>
     </div>
   </div>

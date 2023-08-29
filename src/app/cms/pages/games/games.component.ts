@@ -16,14 +16,19 @@ export class GamesComponent  implements OnInit {
   constructor(private tokeplayService: TokenplayService) { }
 
   async ngOnInit() {
-    this.allGames = await this.tokeplayService.getNFTs();
-    for (const item of this.allGames){
-      if (item.tokenId > 11000) continue;
-      const gameURI = await this.tokeplayService.fetchGameURI(item.tokenId);
-      this.gamesInProperty.push(gameURI)
+    const gamesObj = await this.tokeplayService.getGamesFromAddress()
+
+    for (const key in gamesObj) {
+        if (gamesObj.hasOwnProperty(key)) {
+            const gameObj = gamesObj[key];
+            const gameURI = Object.assign(await this.tokeplayService.fetchGameURI(gameObj.game?.tokenId), gameObj.game);
+            this.gamesInProperty.push(gameURI)
+        }
     }
-    console.log(this.allGames);
+
     console.log(this.gamesInProperty);
-  }
+}
+
 
 }
+

@@ -4,7 +4,12 @@ export interface TokenPlayUriGames {
     download: string;
     image: string;
     name: string;
-    price?: number;
+    gameOwnerAddress?: string;
+    gameRelease?: string;
+    price: number;
+    supply?: string;
+    tokenId: number;
+    tokenPlayRoyaltyPercentage?: string;
 }
 
 export interface categoryTokenPlayGames {

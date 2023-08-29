@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ListResponse } from 'src/app/models/api.model';
 import { Game } from 'src/app/models/games.model';
 import { Gender } from 'src/app/models/gender.model';
@@ -16,7 +17,7 @@ export class HomePage implements OnInit {
   allGames: ListResponse<Game> = {count: 0, results: []};
   allGenders: ListResponse<Gender> = {count: 0, results: []};
 
-  constructor(private gamesService:GamesService) { }
+  constructor(private gamesService:GamesService, private router: Router) { }
 
   ngOnInit() {
     this.gamesService.getGames().subscribe((data) => {
@@ -43,6 +44,11 @@ export class HomePage implements OnInit {
     this.gamesService.getGames(this.pageNumber, ordering).subscribe((data) => {
       this.allGames = data;
     })
+  }
+
+  
+  navegarACatalogo() {
+    this.router.navigate([`/catalogo`]);
   }
 
 }

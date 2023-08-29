@@ -4,6 +4,7 @@ import { LayoutComponent } from './cms/pages/layout/layout.component';
 import { LoginGuard } from './guards/login.guard';
 import { CategoryGamesComponent } from './Pages/category-games/category-games.component';
 import { HomePage } from './Pages/home/home.page';
+import { CatalogoPage } from './Pages/catalogo/catalogo.page';
 import { LoginPage } from './Pages/login/login.page';
 import { MarketplaceComponent } from './Pages/marketplace/marketplace.component';
 import { RegisterPageComponent } from './Pages/register/register.page';
@@ -17,6 +18,10 @@ const routes: Routes = [
   {
     path: 'home',
     component: HomePage,
+  },
+  {
+    path: 'catalogo',
+    component: CatalogoPage,
   },
   {
     path: 'login',

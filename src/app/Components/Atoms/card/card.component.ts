@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Game } from 'src/app/models/games.model';
 
 @Component({
@@ -18,8 +19,12 @@ export class CardComponent  implements OnInit {
     added: 0
   };
 
-  constructor() { }
+  constructor(private router: Router) { }
 
   ngOnInit() {}
+
+  navegarACatalogo() {
+    this.router.navigate([`/catalogo`]);
+  }
 
 }

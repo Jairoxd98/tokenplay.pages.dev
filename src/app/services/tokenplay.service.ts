@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import Web3 from 'web3';
 import { TokenPlayUriGames } from '../models/tokenplayUriGames.model';
+import { AuthService } from './auth.service';
 
 const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 @Injectable({
@@ -9,12 +10,12 @@ const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 })
 export class TokenplayService {
 
+  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
   web3: any;
   contract: any;
   tokenplayAddress: any;
-  address : any;
 
-  constructor() {
+  constructor(private authService: AuthService) {
     this.web3 = new Web3;
 
     this.web3.setProvider(
@@ -56,6 +57,35 @@ export class TokenplayService {
   formatWeiToEth(valueInWei: any){
     return this.web3.utils.fromWei(valueInWei,'ether');
   }
+
+  async buyGame(tokenId: number, priceGameInWei: number) {
+    const account = await this.authService.getAccount();
+
+    const data = await this.contract.methods.purchaseNFT(tokenId).encodeABI();
+    const transactionData = {
+        from: this.truffleWalletTestAddress,
+        to: this.tokenplayAddress,
+        value: priceGameInWei,
+        gasPrice: this.web3.utils.toHex(10000000000),
+        gasLimit: this.web3.utils.toHex(1000000),
+        data: data
+    };
+
+    this.web3.eth.sendTransaction(transactionData)
+        .on('transactionHash', function(hash: any){
+            console.log(`Transaction hash: ${hash}`);
+        })
+        .on('receipt', function(receipt: any){
+            console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
+        })
+        .on('error', function(error: any, receipt: any) {
+            console.error('Error sending transaction', error);
+        });
+    }
+
+    async getGamesFromAddress(address: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215'){
+      return await this.contract.methods.getPurchasedNFTs(address).call();
+    }
 
 }
 

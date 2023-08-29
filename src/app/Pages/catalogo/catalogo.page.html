@@ -1,0 +1,9 @@
+<div class="h-full w-full flex flex-col gap-4 mt-16 px-8 overflow-auto">
+  <div>
+    <h1 class="text-white text-5xl font-bold mt-4">Catalogo</h1>
+  </div>
+  <div class="h-full grid grid-cols-5 gap-8 mb-12">
+    <app-tokenplay-card-game *ngFor="let game of gamesInProperty" [game]="game"></app-tokenplay-card-game>
+  </div>
+
+</div>

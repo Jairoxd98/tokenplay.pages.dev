@@ -20,15 +20,19 @@ export class MarketplaceTokenplayService {
       new this.web3.providers.HttpProvider(environment.provider)
     );
 
-    this.tokenplayAddress = TOKENPLAY_MARKETPLACE.networks[environment.networkId].address;
+    this.tokenplayAddress = TOKENPLAY_MARKETPLACE.networks[environment.networkId].address ;
     this.contract = new this.web3.eth.Contract(TOKENPLAY_MARKETPLACE.abi, this.tokenplayAddress);
   }
 
-  buyNFTGame(){
+  async getGamesOnSale(){
+    return await this.contract.methods.getGamesForSale().call();
+  }
 
+  buyNFTGame(){
+    
   }
 
   shellNFTGame(){
-    
+
   }
 }
