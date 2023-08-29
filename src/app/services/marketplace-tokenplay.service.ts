@@ -2,7 +2,7 @@ import {Injectable } from '@angular/core';
 import Web3 from 'web3';
 import { environment } from '../../environments/environment';
 
-const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
+const TOKENPLAY_MARKETPLACE = require('../../../build/contracts/NFTGamesMarketplace.json');
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +20,15 @@ export class MarketplaceTokenplayService {
       new this.web3.providers.HttpProvider(environment.provider)
     );
 
-    //this.addres
+    this.tokenplayAddress = TOKENPLAY_MARKETPLACE.networks[environment.networkId].address;
+    this.contract = new this.web3.eth.Contract(TOKENPLAY_MARKETPLACE.abi, this.tokenplayAddress);
+  }
+
+  buyNFTGame(){
+
+  }
+
+  shellNFTGame(){
+    
   }
 }

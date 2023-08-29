@@ -2,7 +2,7 @@
   <div class="w-[87%] h-full flex flex-col justify-start items-center ml-[250px]">
     <h1 class="mt-20 text-5xl mb-4">Your Games</h1>
     <div class="w-full h-full grid grid-cols-5 gap-4 mb-12">
-      <app-card *ngFor="let game of gamesInProperty" [game]="game"></app-card>
+      <app-tokenplay-card-game *ngFor="let game of gamesInProperty" [game]="game"></app-tokenplay-card-game>
     </div>
   </div>
 </ion-content>

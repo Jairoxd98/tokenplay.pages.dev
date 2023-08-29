@@ -1,4 +1,5 @@
 const TOKENPLAY = artifacts.require("contracts/TOKENPLAY");
+const TOKENPLAY = artifacts.require("TOKENPLAY");
 
 module.exports = async function (callback) {
     var _TOKENPLAY = await TOKENPLAY.deployed();
@@ -25,6 +26,18 @@ module.exports = async function (callback) {
     await _TOKENPLAY.addNFT(20006,priceNFT,accounts[2],3,10,0, {from: accounts[0]});
 
     await _TOKENPLAY.purchaseNFT(20006, {from: accounts[1], value: 1000000000000000000 });
+
+    await _TOKENPLAY.addNFT(10004,priceNFT,accounts[2],7,10,0, {from: accounts[0]});
+
+    await _TOKENPLAY.purchaseNFT(10004, {from: accounts[1], value: 1000000000000000000 });
+
+    await _TOKENPLAY.addNFT(10005,priceNFT,accounts[3],5,15,0, {from: accounts[0]});
+
+    await _TOKENPLAY.purchaseNFT(10005, {from: accounts[4], value: 1000000000000000000 });
+
+    await _TOKENPLAY.addNFT(10006,priceNFT,accounts[5],4,18,0, {from: accounts[0]});
+
+    await _TOKENPLAY.purchaseNFT(10006, {from: accounts[6], value: 1000000000000000000 });
 
     await _TOKENPLAY.flipMintState();
 

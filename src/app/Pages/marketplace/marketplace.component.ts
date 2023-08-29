@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ListResponse } from 'src/app/models/api.model';
 import { Game } from 'src/app/models/games.model';
+import { TokenPlayGame } from 'src/app/models/tokenplayGame.model';
+import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
 import { GamesService } from 'src/app/services/games.service';
+import { TokenplayService } from 'src/app/services/tokenplay.service';
 
 @Component({
   selector: 'app-marketplace',
@@ -10,25 +13,18 @@ import { GamesService } from 'src/app/services/games.service';
 })
 export class MarketplaceComponent  implements OnInit {
 
-  pageNumber: number = 1;
-  allGames: ListResponse<Game> = {count: 0, results: []};
+  gamesInProperty: TokenPlayUriGames[] = []
+  allGames: TokenPlayGame[] = [];
+  constructor(private tokeplayService: TokenplayService) { }
 
-  constructor(private gamesService:GamesService) { }
-
-  ngOnInit() {
-    this.gamesService.getGames().subscribe((data) => {
-      this.allGames = data;
-    })
+  async ngOnInit() {
+    this.allGames = await this.tokeplayService.getNFTs();
+    for (const item of this.allGames){
+      if (item.tokenId > 11000) continue;
+      const gameURI = Object.assign(await this.tokeplayService.fetchGameURI(item.tokenId), {price: this.tokeplayService.formatWeiToEth(item.price)});
+      this.gamesInProperty.push(gameURI)
+    }
+    console.log(this.allGames);
+    console.log(this.gamesInProperty);
   }
-
-  seeMoreGames(){
-    this.pageNumber++;
-    this.gamesService.getGames(this.pageNumber).subscribe((data) => {
-      this.allGames = {
-        count: this.allGames.count + data.count,
-        results: [...this.allGames.results, ...data.results]
-      }
-    })
-  }
-
 }

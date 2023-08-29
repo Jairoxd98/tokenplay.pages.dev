@@ -1,15 +1,10 @@
-<div class="flex flex-col gap-4 mt-16 px-8 overflow-auto">
+<div class="h-full w-full flex flex-col gap-4 mt-16 px-8 overflow-auto">
   <div>
     <h1 class="text-white text-5xl font-bold mt-4">MarketPlace</h1>
     <h4 class="text-white text-base">Games from other users (2 Hand Market)</h4>
   </div>
-  <app-card-list [games]="allGames.results"></app-card-list>
-  <div class="w-full flex justify-center items-center mb-8">
-    <button
-      class="border border-solid border-red-500 py-4 px-12 rounded-full text-red-500 flex items-center gap-2 font-bold transition-all transform hover:scale-105 hover:bg-red-500 hover:text-white"
-      (click)="seeMoreGames()"
-    >
-      Show More <ion-icon name="caret-down-outline"></ion-icon>
-    </button>
+  <div class="h-full grid grid-cols-5 gap-8 mb-12">
+    <app-tokenplay-card-game *ngFor="let game of gamesInProperty" [game]="game"></app-tokenplay-card-game>
   </div>
+
 </div>

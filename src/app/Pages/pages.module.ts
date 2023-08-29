@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MarketplaceComponent } from './marketplace/marketplace.component';
 import { CategoryGamesComponent } from './category-games/category-games.component';
+import { AtomsModule } from '../Components/Atoms/atoms.module';
 
 
 
@@ -19,6 +20,7 @@ import { CategoryGamesComponent } from './category-games/category-games.componen
   imports: [
     CommonModule,
     MoleculesModule,
+    AtomsModule,
     IonicModule,
     FormsModule,
     RouterModule,

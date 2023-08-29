@@ -16,7 +16,7 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    bool public mintIsActive = false;
+    bool public mintIsActive = true;
 
     // Estructura para guardar los datos relevantes del NFT
     struct NftGameInfo {
@@ -256,32 +256,4 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
         }
         return (size > 0);
     }
-
-    /*
-    // Función para obtener los juegos de una categoria
-    function getCategoryNFTs(string memory category) external view returns (NftGameInfo[] memory) {
-        NftGameInfo[] memory matchingNFTs;
-        uint256 matchingCount = 0;
-
-        for (uint256 i = 0; i < nextTokenId; i++) {
-            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
-            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
-                matchingCount++;
-            }
-        }
-
-        matchingNFTs = new NftGameInfo[](matchingCount);
-        uint256 currentIndex = 0;
-
-        for (uint256 i = 0; i < nextTokenId; i++) {
-            NftGameInfo storage nftInfo = gamesInfo[i]; // habría que cambiar la i
-            if(gamesInfo[i].gameRelease <= block.timestamp && keccak256(abi.encodePacked(nftInfo.category)) == keccak256(abi.encodePacked(category))){
-                matchingNFTs[currentIndex] = nftInfo;
-                currentIndex++;
-            }
-        }
-
-        return matchingNFTs;
-    }
-    */
 }
