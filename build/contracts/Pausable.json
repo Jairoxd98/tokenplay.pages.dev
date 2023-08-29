@@ -1215,8 +1215,8 @@
     "version": "0.8.19+commit.7dd6d404.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.4.14",
-  "updatedAt": "2023-08-24T14:35:16.173Z",
+  "schemaVersion": "3.4.15",
+  "updatedAt": "2023-08-28T18:22:50.759Z",
   "devdoc": {
     "details": "Contract module which allows children to implement an emergency stop mechanism that can be triggered by an authorized account. This module is used through inheritance. It will make available the modifiers `whenNotPaused` and `whenPaused`, which can be applied to the functions of your contract. Note that they will not be pausable by simply including this module, only once the modifiers are put in place.",
     "events": {
