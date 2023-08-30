@@ -36,15 +36,29 @@ TOKENPLAY es una DApp que permite a los usuarios comprar NFTs relacionados con l
    ```
    npm install
    ```
-4. Compilar el contrato inteligente
+4. Desplegamos el contrato inteligente
    ```
-   truffle compile
+   truffle deploy
    ```
 5. Iniciar la aplicación
    ```
-   ionic serve
+   npm serve
    ```
 Nota: comprobar que está correctamente configurado los archivos "truffle-config.js", la migración de truffle "1691403915_tokenplay.js" y "enviroment.ts", para el entorno en el que se vaya a probar
+
+## Test
+1. Entramos a la consola de truffle
+   ```
+   truffle console
+   ```
+2. Ejecutamos el test del SC TOKENPLAY.sol
+   ```
+   test test/testTOKENPLAY.js
+   ```
+3. Ejecutamos el test del SC TOKENPLAY.sol
+   ```
+   test test/testMarketplace.js
+   ```
 
 ## Uso
 
@@ -68,6 +82,7 @@ En la página principal, puedes ver todos los NFTs disponibles para compra, y en
 - Web3.js
 - Angular
 - Ionic
+- Tailwind
 
 ## Créditos
 
