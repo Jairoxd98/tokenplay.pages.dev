@@ -10,7 +10,7 @@ const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 })
 export class TokenplayService {
 
-  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
+  private truffleWalletTestAddress: string = '0x7Ba7BAeed0b7562B4cf9e409aD37788BC6ae03d8';
   web3: any;
   contract: any;
   tokenplayAddress: any;
@@ -49,15 +49,18 @@ export class TokenplayService {
       return metadata
   }
 
+  // Método para obtener el balance de un juego
   async getBalanceFromAddress(address: any){
     const  weis = await this.web3.eth.getBalance(address);
     return this.web3.utils.fromWei(weis,'ether');
   }
 
+  // Método para transformar de WEI a ETH
   formatWeiToEth(valueInWei: any){
     return this.web3.utils.fromWei(valueInWei,'ether');
   }
 
+  // Método para comprar un juego
   async buyGame(tokenId: number, priceGameInWei: number) {
     const account = await this.authService.getAccount();
 
@@ -81,11 +84,30 @@ export class TokenplayService {
         .on('error', function(error: any, receipt: any) {
             console.error('Error sending transaction', error);
         });
-    }
+  }
 
-    async getGamesFromAddress(address: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215'){
-      return await this.contract.methods.getPurchasedNFTs(address).call();
+  // Método para obtener los juegos comprados por un usuario
+  async getGamesFromAddress(address: string = this.truffleWalletTestAddress){
+    return await this.contract.methods.getPurchasedNFTs(address).call();
+  }
+
+  // Método para comprobar que el usuario es el Owner
+  async checkOwnership() {
+    const userAddress = await this.authService.getAccount();
+    const ownerAddress = await this.contract.methods.owner().call();
+    return userAddress === ownerAddress;
+  }
+
+  // Método para cambiar el estado de Mint
+  async flipMintState(): Promise<any> {
+    const userAddress = await this.authService.getAccount();
+    const isOwner = await this.checkOwnership();
+    if (!isOwner) {
+      alert('You are not the owner of this contract.');
+      return;
     }
+    return await this.contract.methods.flipMintState().send({ from: userAddress });
+  }
 
 }
 

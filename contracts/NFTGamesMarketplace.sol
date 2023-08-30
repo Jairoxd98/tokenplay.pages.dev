@@ -67,8 +67,10 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         Sale memory sale = Sale({saleId: saleId, tokenId: tokenId, seller: msg.sender, price: price, arrayPosition: sales.length, status: SaleStatus.Listed});
         sales.push(sale);
         salesInfo[saleId] = sale;
+        emit SaleCreated(saleId, tokenId, msg.sender, price);
     }
 
+    // Función para cancelar un juego en venta
     function cancelSale(uint256 saleId) payable external whenNotPaused {
         require(saleId >= 0, "Invalid sale id");
 
@@ -99,6 +101,7 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         emit SaleCanceled(saleId, msg.sender);
     }
 
+    // Función para comprar un juego en venta
     function purchaseFromMarketplace(uint256 saleId) external payable whenNotPaused {
         require(saleId >= 0, "Invalid sale id");
 
@@ -182,12 +185,14 @@ contract NFTGamesMarketplace is Ownable, ERC1155Holder, ReentrancyGuard, Pausabl
         emit SalePriceUpdated(saleId, newPrice, msg.sender);
     }
 
+    // Modificar royalty de la DAPP
     function setCommissionPercentage(uint256 _commissionPercentage) external onlyOwner {
         require(_commissionPercentage >= 0 && _commissionPercentage <= 100, "Invalid commission percentage");
         commissionPercentage = _commissionPercentage;
         emit CommissionUpdated(_commissionPercentage);
     }
 
+    // Obtener royalty de la DAPP
     function getCommissionPercentage() external view returns (uint256) {
         return commissionPercentage;
     }

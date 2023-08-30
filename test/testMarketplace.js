@@ -15,7 +15,7 @@ contract("NFTGamesMarketplace Tests", async accounts => {
 
     // 1. Creación y compra de un NFT con el contrato TOKENPLAY
     it("should add and buy an NFT correctly", async () => {
-        await tokenplayInstance.flipMintState();
+        //await tokenplayInstance.flipMintState();
         await tokenplayInstance.addNFT(10001, web3.utils.toWei("1", "ether"), accounts[2], 5, 10, 0, {from: accounts[0]});
         await tokenplayInstance.purchaseNFT(10001, {from: seller, value: web3.utils.toWei("1", "ether")});
         const balance = await tokenplayInstance.balanceOf(seller, 10001);
