@@ -9,7 +9,6 @@ import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenp
   styleUrls: ['./selling-games.component.scss'],
 })
 export class SellingGamesComponent  implements OnInit {
-  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
   gamesOnSale: MarketPlaceTokenPlayUriGames[] = []
   
   constructor(private marketplaceTokenplayService: MarketplaceTokenplayService, private authService: AuthService) { }
@@ -21,7 +20,7 @@ export class SellingGamesComponent  implements OnInit {
   async getSaleGames(){
     const account = await this.authService.getAccount();
     const  games = await this.marketplaceTokenplayService.getGamesOnSale();
-    this.gamesOnSale = games.filter((x: any) => x.seller === this.truffleWalletTestAddress);
+    this.gamesOnSale = games.filter((x: any) => x.seller === account);
     console.log("Games");
     console.log(games)
     console.log("Filtered");

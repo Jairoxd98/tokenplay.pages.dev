@@ -3,10 +3,11 @@ import { environment } from 'src/environments/environment';
 import Web3 from 'web3';
 import { TokenPlayUriGames } from '../models/tokenplayUriGames.model';
 import { AuthService } from './auth.service';
+import { ethers } from 'ethers';
 
 const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class TokenplayService {
   web3: any;
@@ -14,17 +15,12 @@ export class TokenplayService {
   tokenplayAddress: any;
 
   constructor(private authService: AuthService) {
-    this.web3 = new Web3();
+    this.web3 = new Web3;
 
-    this.web3.setProvider(
-      new this.web3.providers.HttpProvider(environment.provider)
-    );
+    this.web3 = new Web3(window.ethereum);
 
     this.tokenplayAddress = environment.tokenplaySM;
-    this.contract = new this.web3.eth.Contract(
-      TOKENPLAY.abi,
-      this.tokenplayAddress
-    );
+    this.contract = new this.web3.eth.Contract(TOKENPLAY.abi, this.tokenplayAddress);
   }
 
   // Método para obtener todos los NFTs disponibles
@@ -36,7 +32,7 @@ export class TokenplayService {
   private async getGameURI(tokenId: number): Promise<string> {
     return await this.contract.methods.uri(tokenId).call();
   }
-
+  
   // Método para obtener los metadatas de un juego
   private async getMetadata(url: string): Promise<TokenPlayUriGames> {
     const response = await fetch(url);
@@ -45,54 +41,47 @@ export class TokenplayService {
   }
 
   async fetchGameURI(tokenId: number) {
-    const gameURI = await this.getGameURI(tokenId);
-    console.log(gameURI);
-
-    const metadata = await this.getMetadata(gameURI);
-    return metadata;
+      const gameURI = await this.getGameURI(tokenId);
+      console.log(gameURI);
+      
+      const metadata = await this.getMetadata(gameURI);
+      return metadata
   }
 
   // Método para obtener el balance de un juego
-  async getBalanceFromAddress(address: any) {
-    const weis = await this.web3.eth.getBalance(address);
-    return this.web3.utils.fromWei(weis, 'ether');
+  async getBalanceFromAddress(address: any){
+    const  weis = await this.web3.eth.getBalance(address);
+    return this.web3.utils.fromWei(weis,'ether');
   }
 
   // Método para transformar de WEI a ETH
-  formatWeiToEth(valueInWei: any) {
-    return this.web3.utils.fromWei(valueInWei, 'ether');
+  formatWeiToEth(valueInWei: any){
+    return this.web3.utils.fromWei(valueInWei,'ether');
   }
 
   // Método para comprar un juego
   async buyGame(tokenId: number, priceGameInWei: number) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+		const signer = await provider.getSigner();
+
     const account = await this.authService.getAccount();
 
     const data = await this.contract.methods.purchaseNFT(tokenId).encodeABI();
     const transactionData = {
-      from: account,
-      to: this.tokenplayAddress,
-      value: priceGameInWei,
-      gasPrice: this.web3.utils.toHex(10000000000),
-      gasLimit: this.web3.utils.toHex(1000000),
-      data: data,
+        from: account,
+        to: this.tokenplayAddress,
+        value: priceGameInWei,
+        gasPrice: this.web3.utils.toHex(10000000000),
+        gasLimit: this.web3.utils.toHex(1000000),
+        data: data
     };
 
-    this.web3.eth
-      .eth_sendRawTransaction(transactionData, account)
-      .then((signedTx: any) => {
-        console.log(`Signed Transaction Hash: ${signedTx.hash}`);
-        return this.web3.eth.sendSignedTransaction(signedTx.raw);
-      })
-      .on('receipt', (receipt: any) => {
-        console.log(receipt);
-      })
-      .on('error', (error: any) => {
-        console.error(error);
-      });
+    const pendingTransaction = await signer.sendTransaction(transactionData);
+    const confirmedTransaction = await pendingTransaction.wait();
   }
 
   // Método para obtener los juegos comprados por un usuario
-  async getGamesFromAddress() {
+  async getGamesFromAddress(){
     const account = await this.authService.getAccount();
     return await this.contract.methods.getPurchasedNFTs(account).call();
   }
@@ -112,19 +101,17 @@ export class TokenplayService {
       alert('You are not the owner of this contract.');
       return;
     }
-    return await this.contract.methods
-      .flipMintState()
-      .send({ from: userAddress });
+    return await this.contract.methods.flipMintState().send({ from: userAddress });
   }
 
-  async approveMarketplace(addresMarketplace: string) {
+  async approveMarketplace(addresMarketplace: string){
     const account = await this.authService.getAccount();
-    await this.contract.methods
-      .approveMarketplace(addresMarketplace)
-      .send({ from: account });
+    await this.contract.methods.approveMarketplace(addresMarketplace).send({ from: account });
   }
-
-  async balanceOf(address: string, tokenId: number) {
+  
+  async balanceOf(address: string, tokenId: number){
     return await this.contract.methods.balanceOf(address, tokenId).call();
   }
+
 }
+

@@ -73,7 +73,7 @@ async ionViewWillEnter() {
   async putGameOnSale(){
     if (this.nameForm && this.priceForm) {
 
-      await this.marketplaceTokenplayService.approveMarketplace();
+      // await this.marketplaceTokenplayService.approveMarketplace();
       await this.marketplaceTokenplayService.sellNFTGame(this.sellingGame.tokenId, this.priceForm)
       await this.ionViewWillEnter();
 
