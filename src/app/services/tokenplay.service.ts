@@ -6,24 +6,25 @@ import { AuthService } from './auth.service';
 
 const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TokenplayService {
-
-  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
   web3: any;
   contract: any;
   tokenplayAddress: any;
 
   constructor(private authService: AuthService) {
-    this.web3 = new Web3;
+    this.web3 = new Web3();
 
     this.web3.setProvider(
       new this.web3.providers.HttpProvider(environment.provider)
     );
 
-    this.tokenplayAddress = TOKENPLAY.networks[environment.networkId].address;
-    this.contract = new this.web3.eth.Contract(TOKENPLAY.abi, this.tokenplayAddress);
+    this.tokenplayAddress = environment.tokenplaySM;
+    this.contract = new this.web3.eth.Contract(
+      TOKENPLAY.abi,
+      this.tokenplayAddress
+    );
   }
 
   // Método para obtener todos los NFTs disponibles
@@ -35,7 +36,7 @@ export class TokenplayService {
   private async getGameURI(tokenId: number): Promise<string> {
     return await this.contract.methods.uri(tokenId).call();
   }
-  
+
   // Método para obtener los metadatas de un juego
   private async getMetadata(url: string): Promise<TokenPlayUriGames> {
     const response = await fetch(url);
@@ -44,20 +45,22 @@ export class TokenplayService {
   }
 
   async fetchGameURI(tokenId: number) {
-      const gameURI = await this.getGameURI(tokenId);
-      const metadata = await this.getMetadata(gameURI);
-      return metadata
+    const gameURI = await this.getGameURI(tokenId);
+    console.log(gameURI);
+
+    const metadata = await this.getMetadata(gameURI);
+    return metadata;
   }
 
   // Método para obtener el balance de un juego
-  async getBalanceFromAddress(address: any){
-    const  weis = await this.web3.eth.getBalance(address);
-    return this.web3.utils.fromWei(weis,'ether');
+  async getBalanceFromAddress(address: any) {
+    const weis = await this.web3.eth.getBalance(address);
+    return this.web3.utils.fromWei(weis, 'ether');
   }
 
   // Método para transformar de WEI a ETH
-  formatWeiToEth(valueInWei: any){
-    return this.web3.utils.fromWei(valueInWei,'ether');
+  formatWeiToEth(valueInWei: any) {
+    return this.web3.utils.fromWei(valueInWei, 'ether');
   }
 
   // Método para comprar un juego
@@ -66,29 +69,32 @@ export class TokenplayService {
 
     const data = await this.contract.methods.purchaseNFT(tokenId).encodeABI();
     const transactionData = {
-        from: this.truffleWalletTestAddress,
-        to: this.tokenplayAddress,
-        value: priceGameInWei,
-        gasPrice: this.web3.utils.toHex(10000000000),
-        gasLimit: this.web3.utils.toHex(1000000),
-        data: data
+      from: account,
+      to: this.tokenplayAddress,
+      value: priceGameInWei,
+      gasPrice: this.web3.utils.toHex(10000000000),
+      gasLimit: this.web3.utils.toHex(1000000),
+      data: data,
     };
 
-    this.web3.eth.sendTransaction(transactionData)
-        .on('transactionHash', function(hash: any){
-            console.log(`Transaction hash: ${hash}`);
-        })
-        .on('receipt', function(receipt: any){
-            console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
-        })
-        .on('error', function(error: any, receipt: any) {
-            console.error('Error sending transaction', error);
-        });
+    this.web3.eth
+      .eth_sendRawTransaction(transactionData, account)
+      .then((signedTx: any) => {
+        console.log(`Signed Transaction Hash: ${signedTx.hash}`);
+        return this.web3.eth.sendSignedTransaction(signedTx.raw);
+      })
+      .on('receipt', (receipt: any) => {
+        console.log(receipt);
+      })
+      .on('error', (error: any) => {
+        console.error(error);
+      });
   }
 
   // Método para obtener los juegos comprados por un usuario
-  async getGamesFromAddress(address: string = this.truffleWalletTestAddress){
-    return await this.contract.methods.getPurchasedNFTs(address).call();
+  async getGamesFromAddress() {
+    const account = await this.authService.getAccount();
+    return await this.contract.methods.getPurchasedNFTs(account).call();
   }
 
   // Método para comprobar que el usuario es el Owner
@@ -106,16 +112,19 @@ export class TokenplayService {
       alert('You are not the owner of this contract.');
       return;
     }
-    return await this.contract.methods.flipMintState().send({ from: userAddress });
+    return await this.contract.methods
+      .flipMintState()
+      .send({ from: userAddress });
   }
 
-  async approveMarketplace(addresMarketplace: string){
-    await this.contract.methods.approveMarketplace(addresMarketplace).send({ from: this.truffleWalletTestAddress });
+  async approveMarketplace(addresMarketplace: string) {
+    const account = await this.authService.getAccount();
+    await this.contract.methods
+      .approveMarketplace(addresMarketplace)
+      .send({ from: account });
   }
-  
-  async balanceOf(address: string, tokenId: number){
+
+  async balanceOf(address: string, tokenId: number) {
     return await this.contract.methods.balanceOf(address, tokenId).call();
   }
-
 }
-
