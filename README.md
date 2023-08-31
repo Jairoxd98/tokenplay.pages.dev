@@ -42,7 +42,7 @@ TOKENPLAY es una DApp que permite a los usuarios comprar NFTs relacionados con l
    ```
 5. Iniciar la aplicación
    ```
-   npm serve
+   ng serve
    ```
 Nota: comprobar que está correctamente configurado los archivos "truffle-config.js", la migración de truffle "1691403915_tokenplay.js" y "enviroment.ts", para el entorno en el que se vaya a probar
 
