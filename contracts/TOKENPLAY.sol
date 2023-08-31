@@ -140,8 +140,6 @@ contract TOKENPLAY is ERC1155, ERC1155URIStorage, Ownable, ReentrancyGuard, Paus
     // Funcion para obtener los juegos que ha comprado un usuario
     function getPurchasedNFTs(address account) external view returns (PurchasedNft[] memory) {
         require( account != address(0), "Invalid address");
-        uint256 purchasedCount = purchasedNFTs[account].length();
-        require(purchasedCount > 0, "The user has not purchased any NFTs");
 
         PurchasedNft[] memory accountGames = new PurchasedNft[](purchasedNFTs[account].length());
 
