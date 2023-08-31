@@ -84,6 +84,10 @@ En la página principal, puedes ver todos los NFTs disponibles para compra, y en
 - Ionic
 - Tailwind
 
+## <strong>Link a la DAPP</strong>
+
+https://tokenplay.pages.dev
+
 ## Créditos
 
 Desarrollado por Jairo Celada Cebrián, Marc Franch Sole y Joan Jimenez Jané.
