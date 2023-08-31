@@ -10,7 +10,7 @@ const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 })
 export class TokenplayService {
 
-  private truffleWalletTestAddress: string = '0x7Ba7BAeed0b7562B4cf9e409aD37788BC6ae03d8';
+  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
   web3: any;
   contract: any;
   tokenplayAddress: any;

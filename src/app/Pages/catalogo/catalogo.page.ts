@@ -21,7 +21,6 @@ export class CatalogoPage implements OnInit {
   async ngOnInit() {
     this.allGames = await this.tokeplayService.getNFTs();
     for (const item of this.allGames){
-      if (item.tokenId > 11000) continue;
       const gameURI = Object.assign(await this.tokeplayService.fetchGameURI(item.tokenId), item);
       this.gamesInProperty.push(gameURI)
     }

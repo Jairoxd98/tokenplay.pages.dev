@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { TokenPlayGame } from 'src/app/models/tokenplayGame.model';
-import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
+import { MarketPlaceTokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
 import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
+import { TokenplayService } from 'src/app/services/tokenplay.service';
 
 @Component({
   selector: 'app-marketplace',
@@ -10,13 +10,18 @@ import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenp
 })
 export class MarketplaceComponent  implements OnInit {
 
-  gamesInProperty: TokenPlayUriGames[] = []
-  allGames: TokenPlayGame[] = [];
-  constructor(private marketplaceService: MarketplaceTokenplayService) { }
+  gamesInMarketPlace: MarketPlaceTokenPlayUriGames[] = []
+  constructor(private marketplaceService: MarketplaceTokenplayService, private tokenplayService: TokenplayService) { }
 
-  async ngOnInit() {
-    const pp = await this.marketplaceService.getGamesOnSale();
-    console.log(pp);
-    
+  async ngOnInit() {    
+   const games = await this.marketplaceService.getGamesOnSale();
+
+   for (const game of games){
+    const gameURI = Object.assign(await this.tokenplayService.fetchGameURI(game.tokenId), game);
+    this.gamesInMarketPlace.push(gameURI)
+  }
+
+  console.log(this.gamesInMarketPlace);
+  
   }
 }

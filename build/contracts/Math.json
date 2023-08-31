@@ -11692,8 +11692,8 @@
     "version": "0.8.19+commit.7dd6d404.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.4.14",
-  "updatedAt": "2023-08-30T10:41:41.405Z",
+  "schemaVersion": "3.4.15",
+  "updatedAt": "2023-08-30T17:20:04.171Z",
   "devdoc": {
     "details": "Standard math utilities missing in the Solidity language.",
     "kind": "dev",

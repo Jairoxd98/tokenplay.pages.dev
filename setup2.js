@@ -18,20 +18,21 @@ module.exports = async function (callback) {
   const price = web3.utils.toWei("1", "ether");
   try{
     // Crea anuncio
-    await marketplaceInstance.createSale(10007, price, { from: seller });
-    console.log(await marketplaceInstance.getGamesForSale());
+    await marketplaceInstance.createSale(10006, price, { from: seller });
+    const gameMarket = await marketplaceInstance.getGamesForSale();
+    console.log(gameMarket);
 
-    // Cancela anuncio
-    await marketplaceInstance.cancelSale(0, { from: seller });
-    console.log(await marketplaceInstance.getGamesForSale());
+    // // Cancela anuncio
+    // await marketplaceInstance.cancelSale(0, { from: seller });
+    // console.log(await marketplaceInstance.getGamesForSale());
 
-    // Crea anuncio
-    await marketplaceInstance.createSale(10007, price, { from: seller });
-    console.log(await marketplaceInstance.getGamesForSale());
+    // // Crea anuncio
+    // await marketplaceInstance.createSale(10007, price, { from: seller });
+    // console.log(await marketplaceInstance.getGamesForSale());
 
-    // Compra anuncio
-    await marketplaceInstance.purchaseFromMarketplace(1, { from: buyer, value: price });
-    console.log(await marketplaceInstance.getGamesForSale());
+    // // Compra anuncio
+    // await marketplaceInstance.purchaseFromMarketplace(1, { from: buyer, value: price });
+    // console.log(await marketplaceInstance.getGamesForSale());
 
   }
   catch (error) {
