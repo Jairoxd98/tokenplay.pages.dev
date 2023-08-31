@@ -8,19 +8,8 @@
       <ion-searchbar show-clear-button="focus" animated="true"></ion-searchbar>
     </ion-buttons>
     
-
-      
     <ion-buttons class="pr-4" slot="end">
       <ion-button *ngIf="!isLoggedIn" (click)="navegarA('login')">Log in</ion-button>
-
-      <!-- Boton de juegos guardados -->
-      <ion-button *ngIf="isLoggedIn">
-        <ion-icon slot="icon-only" name="heart-outline"></ion-icon>
-      </ion-button>
-      <!-- Boton de Carrito de compra -->
-      <ion-button>
-        <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
-      </ion-button>
 
       <ion-button *ngIf="isLoggedIn" (click)="navegarA('cms')">
         <ion-icon slot="icon-only" name="person-outline"></ion-icon>

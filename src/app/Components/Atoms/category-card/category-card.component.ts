@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Gender } from 'src/app/models/gender.model';
 
 @Component({
@@ -24,8 +25,12 @@ export class CategoryCardComponent  implements OnInit {
     'bg-yellow-500'
   ]
 
-  constructor() { }
+  constructor(private router: Router) { }
 
   ngOnInit() {}
+
+  navegarACatlaogo(){
+    this.router.navigate([`catalogo`]);
+  }
 
 }

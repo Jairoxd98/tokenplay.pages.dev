@@ -1,4 +1,4 @@
-<div *ngIf="game" class="relative cursor-pointer h-80 hover:z-10" (click)="navegarACatalogo()">
+<div *ngIf="game" class="relative cursor-pointer h-80 hover:z-10 text-white" (click)="navegarACatalogo()">
   <div class="absolute group transition-all transform hover:scale-105">
     <div [ngStyle]="{'background-image': 'url(' + (game.background_image ? game.background_image : 'https://www.pbpusa.org/Shared/img/notfound.png') + ')'}" class="w-80 h-[13rem] bg-center bg-no-repeat bg-cover rounded-t-3xl">
     </div>

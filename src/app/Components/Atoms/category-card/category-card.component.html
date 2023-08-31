@@ -1,10 +1,10 @@
-<div *ngIf="category" class="group/card h-full w-full relative">
+<div *ngIf="category" class="group/card h-full w-full relative text-white">
   <img [src]="category.image_background" alt="" class="absolute object-cover z-10 h-2/3 w-3/4 top-0 left-8 rounded-xl group-hover/card:scale-105 transition-all duration-500">
   <div class="absolute bottom-0 w-full h-[80%] rounded-b-xl" [ngClass]="bgColors[index]" style="clip-path: polygon(0 30%, 100% 0, 100% 100%, 0% 100%);"></div>
   <div class="absolute -bottom-12 left-0 w-full h-[80%] flex flex-col justify-center items-start z-10 px-6">
     <div class="w-full flex justify-between items-center">
       <h3 class="text-xl font-bold group-hover/card:underline group-hover/card:scale-105 transition-all duration-300">{{category.name}}</h3>
-      <button class="group/button flex justify-center rounded-full bg-black bg-opacity-50 p-2"><ion-icon class="text-xl group-hover/button:scale-125 transition-all duration-200" name="chevron-forward-outline"></ion-icon></button>
+      <button class="group/button flex justify-center rounded-full bg-black bg-opacity-50 p-2" (click)="navegarACatlaogo()"><ion-icon class="text-xl group-hover/button:scale-125 transition-all duration-200" name="chevron-forward-outline"></ion-icon></button>
     </div>
     <h4 class="text-sm group-hover/card:scale-105 transition-all duration-300">{{category.games_count | number}} games</h4>
   </div>
