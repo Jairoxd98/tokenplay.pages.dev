@@ -28,6 +28,7 @@ export class GamesComponent  implements OnInit {
   
   nameForm: string = '';
   priceForm: number | null = null;
+  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
 
 
   constructor(private tokeplayService: TokenplayService, private marketplaceTokenplayService: MarketplaceTokenplayService,private router: Router,  private toastController: ToastController) { }
@@ -59,7 +60,9 @@ async ionViewWillEnter() {
     for (const key in gamesObj) {
         if (gamesObj.hasOwnProperty(key)) {
             const gameObj = gamesObj[key];
-            const gameURI = Object.assign(await this.tokeplayService.fetchGameURI(gameObj.game?.tokenId), gameObj.game);
+            const balanceOfGame = await this.tokeplayService.balanceOf(this.truffleWalletTestAddress, gameObj.game?.tokenId);
+            let gameURI = Object.assign(await this.tokeplayService.fetchGameURI(gameObj.game?.tokenId), gameObj.game);
+            gameURI = Object.assign(gameURI, {supply: balanceOfGame})
             this.gamesInProperty.push(gameURI)
         }
     }

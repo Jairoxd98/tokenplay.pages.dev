@@ -112,6 +112,10 @@ export class TokenplayService {
   async approveMarketplace(addresMarketplace: string){
     await this.contract.methods.approveMarketplace(addresMarketplace).send({ from: this.truffleWalletTestAddress });
   }
+  
+  async balanceOf(address: string, tokenId: number){
+    return await this.contract.methods.balanceOf(address, tokenId).call();
+  }
 
 }
 
