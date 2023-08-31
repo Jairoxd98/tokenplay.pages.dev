@@ -2,6 +2,7 @@ import {Injectable } from '@angular/core';
 import Web3 from 'web3';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { TokenplayService } from './tokenplay.service';
 
 const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 const MARKETPLACE = require('../../../build/contracts/NFTGamesMarketplace.json');
@@ -18,7 +19,7 @@ export class MarketplaceTokenplayService {
   marketPlaceAddress: any;
   //address : any;
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private tokenplayService: TokenplayService) {
     this.web3 = new Web3;
 
     this.web3.setProvider(
@@ -30,6 +31,8 @@ export class MarketplaceTokenplayService {
 
     this.marketPlaceAddress = MARKETPLACE.networks[environment.networkId].address ;
     this.marketPlaceContract = new this.web3.eth.Contract(MARKETPLACE.abi, this.marketPlaceAddress);
+
+    this.approveMarketplace();
   }
 
   async getGamesOnSale(){
@@ -44,91 +47,54 @@ export class MarketplaceTokenplayService {
       value: priceGameInWei
   });
 
-    const data = await this.marketPlaceContract.methods.purchaseFromMarketplace(saleId).encodeABI();
-    const transactionData = {
-        from: this.truffleWalletTestAddress,
-        to: this.tokenplayAddress,
-        value: priceGameInWei,
-        gasPrice: this.web3.utils.toHex(10000000000),
-        gasLimit: this.web3.utils.toHex(estimatedGas),
-        data: data
-    };
+    const data = await this.marketPlaceContract.methods.purchaseFromMarketplace(saleId).send({from: this.truffleWalletTestAddress, gasLimit: estimatedGas, value: priceGameInWei});;
+  //   const transactionData = {
+  //       from: this.truffleWalletTestAddress,
+  //       to: this.tokenplayAddress,
+  //       value: priceGameInWei,
+  //       gasPrice: this.web3.utils.toHex(10000000000),
+  //       gasLimit: this.web3.utils.toHex(estimatedGas),
+  //       data: data
+  //   };
 
-    console.log("SaleId: " + saleId);
-    console.log("priceGameInWei: " + priceGameInWei);
+  //   console.log("SaleId: " + saleId);
+  //   console.log("priceGameInWei: " + priceGameInWei);
     
 
-    this.web3.eth.sendTransaction(transactionData)
-    .on('transactionHash', function(hash: any){
-        console.log(`Transaction hash: ${hash}`);
-    })
-    .on('receipt', function(receipt: any){
-        console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
-    })
-    .on('error', function(error: any, receipt: any) {
-      console.error('Error sending transaction', error);
-  });
+  //   this.web3.eth.sendTransaction(transactionData)
+  //   .on('transactionHash', function(hash: any){
+  //       console.log(`Transaction hash: ${hash}`);
+  //   })
+  //   .on('receipt', function(receipt: any){
+  //       console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
+  //   })
+  //   .on('error', function(error: any, receipt: any) {
+  //     console.error('Error sending transaction', error);
+  // });
   }
 
   async sellNFTGame(tokenId:number, priceInWei: number){
     const account = await this.authService.getAccount();
 
-    const estimatedGas = await this.marketPlaceContract.methods.createSale(tokenId).estimateGas({
+    const estimatedGas = await this.marketPlaceContract.methods.createSale(tokenId, priceInWei).estimateGas({
       from: this.truffleWalletTestAddress,
-      value: priceInWei
   });
 
-    const data = await this.marketPlaceContract.methods.createSale(tokenId).encodeABI();
-    const transactionData = {
-        from: this.truffleWalletTestAddress,
-        to: this.tokenplayAddress,
-        value: priceInWei,
-        gasPrice: this.web3.utils.toHex(10000000000),
-        gasLimit: this.web3.utils.toHex(estimatedGas),
-        data: data
-    };
-    
-
-    this.web3.eth.sendTransaction(transactionData)
-    .on('transactionHash', function(hash: any){
-        console.log(`Transaction hash: ${hash}`);
-    })
-    .on('receipt', function(receipt: any){
-        console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
-    })
-    .on('error', function(error: any, receipt: any) {
-      console.error('Error sending transaction', error);
-  });
-
+    await this.marketPlaceContract.methods.createSale(tokenId, priceInWei).send({ from: this.truffleWalletTestAddress, gasLimit: estimatedGas});
   }
 
   async cancelSellGame(saleId:number){
     const account = await this.authService.getAccount();
-
+    console.log("cancel");
+    
     const estimatedGas = await this.marketPlaceContract.methods.cancelSale(saleId).estimateGas({
       from: this.truffleWalletTestAddress,
   });
 
-    const data = await this.marketPlaceContract.methods.cancelSale(saleId).encodeABI();
-    const transactionData = {
-        from: this.truffleWalletTestAddress,
-        to: this.tokenplayAddress,
-        gasPrice: this.web3.utils.toHex(10000000000),
-        gasLimit: this.web3.utils.toHex(estimatedGas),
-        data: data
-    };
-    
+    await this.marketPlaceContract.methods.cancelSale(saleId).send({ from: this.truffleWalletTestAddress, gasLimit: estimatedGas});
+  }
 
-    this.web3.eth.sendTransaction(transactionData)
-    .on('transactionHash', function(hash: any){
-        console.log(`Transaction hash: ${hash}`);
-    })
-    .on('receipt', function(receipt: any){
-        console.log(`Transaction was confirmed in block: ${receipt.blockNumber}`);
-    })
-    .on('error', function(error: any, receipt: any) {
-      console.error('Error sending transaction', error);
-  });
-
+  async approveMarketplace(){
+    await this.tokenplayService.approveMarketplace(this.marketPlaceAddress);
   }
 }

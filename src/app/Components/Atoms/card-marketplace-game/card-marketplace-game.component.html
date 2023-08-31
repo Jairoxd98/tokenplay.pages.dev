@@ -9,11 +9,14 @@
       <h2 class="text-2xl font-bold">{{game.name}}</h2>
       <p>{{parseWeiToEth(game.price)}} ETH</p>
       <p *ngIf="game.seller">Wallet Seller: {{shortenWalletAddress(game.seller)}}</p>
-      <button *ngIf="buttonType === 'buy'" class="opacity-0 group-hover:opacity-100 bg-red-500 p-4 rounded-full hover:bg-red-600 hover:font-bold transition-all duration-200" (click)="buyGame(game.saleId, game.price)">
+      <button *ngIf="buttonType === 'buy'" class="opacity-0 group-hover:opacity-100 bg-red-500 p-4 rounded-full hover:bg-red-600 hover:font-bold transition-all duration-200" (click)="buyGame(game)">
         Buy
       </button>
       <button *ngIf="buttonType === 'sell'" class="opacity-0 group-hover:opacity-100 bg-red-500 p-4 rounded-full hover:bg-red-600 hover:font-bold transition-all duration-200">
         Sell
+      </button>
+      <button *ngIf="buttonType === 'cancel'" class="opacity-0 group-hover:opacity-100 bg-red-500 p-4 rounded-full hover:bg-red-600 hover:font-bold transition-all duration-200" (click)="cancelGame(game.saleId)">
+        Cancel
       </button>
     </div>
   </div>

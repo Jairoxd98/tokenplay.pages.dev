@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Game } from 'src/app/models/games.model';
+import { MarketPlaceTokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
+import { AuthService } from 'src/app/services/auth.service';
+import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
 
 @Component({
   selector: 'app-selling-games',
@@ -7,36 +9,23 @@ import { Game } from 'src/app/models/games.model';
   styleUrls: ['./selling-games.component.scss'],
 })
 export class SellingGamesComponent  implements OnInit {
+  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
+  gamesOnSale: MarketPlaceTokenPlayUriGames[] = []
+  
+  constructor(private marketplaceTokenplayService: MarketplaceTokenplayService, private authService: AuthService) { }
 
-  isAddingGame: boolean = false;
+  async ngOnInit() {
+    await this.getSaleGames();
+  }
 
-  gamesOnSale: Game[] = [
-    {
-      id: 0,
-      slug: '',
-      name: 'Grand Theft Auto V',
-      released: '',
-      background_image: 'https://media.rawg.io/media/games/20a/20aa03a10cda45239fe22d035c0ebe64.jpg',
-      rating: 0,
-      added: 0
-    },
-    {
-      id: 1,
-      slug: '',
-      name: 'he Witcher 3: Wild Hunt',
-      released: '',
-      background_image: 'https://media.rawg.io/media/games/618/618c2031a07bbff6b4f611f10b6bcdbc.jpg',
-      rating: 0,
-      added: 0
-    },
-]
-
-  constructor() { }
-
-  ngOnInit() {}
-
-  addGame = () => this.isAddingGame = true;
-  gameAdded = () => this.isAddingGame = false;
-
+  async getSaleGames(){
+    const account = await this.authService.getAccount();
+    const  games = await this.marketplaceTokenplayService.getGamesOnSale();
+    this.gamesOnSale = games.filter((x: any) => x.seller === this.truffleWalletTestAddress);
+    console.log("Games");
+    console.log(games)
+    console.log("Filtered");
+    console.log(this.gamesOnSale)
+  }
 
 }

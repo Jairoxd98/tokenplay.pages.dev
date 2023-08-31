@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { Game } from 'src/app/models/games.model';
 import { MarketPlaceTokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
@@ -24,13 +24,29 @@ export class CardMarketPlaceGameComponent  implements OnInit {
     seller: '',
     status: 0
   };
-  @Input() buttonType: 'buy' | 'sell' = "buy";
+  @Input() buttonType: 'buy' | 'sell' | 'cancel' = "buy";
+  @Output() reloadGames = new EventEmitter<boolean>();
+  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
 
   constructor(private marketplaceService:MarketplaceTokenplayService, private tokenplayService:TokenplayService, private toastController: ToastController) { }
 
   ngOnInit() {}
 
-  async buyGame(saleId:number, price: number){
+  async buyGame(game: MarketPlaceTokenPlayUriGames){
+    const {saleId, price, seller} = game;
+
+    if (seller === this.truffleWalletTestAddress) {
+      const toast = await this.toastController.create({
+        message: `You cant buy your own game`,
+        duration: 5000,
+        position: 'bottom',
+        color: 'danger',
+        cssClass: 'toastClass'
+      });
+      await toast.present();
+      return;
+    }
+
     try {
       this.marketplaceService.buyNFTGame(saleId, price)
 
@@ -42,6 +58,7 @@ export class CardMarketPlaceGameComponent  implements OnInit {
         cssClass: 'toastClass'
       });
       await toast.present();
+      this.reloadGames.emit(true);
     } catch (error) {
       const toast = await this.toastController.create({
         message: `Error`,
@@ -64,4 +81,19 @@ export class CardMarketPlaceGameComponent  implements OnInit {
 		}
 		return `${address.slice(0, digits + 2)}...${address.slice(-digits)}`;
 	};
+
+  async cancelGame(saleId: number){
+    await this.marketplaceService.cancelSellGame(saleId);
+
+    const toast = await this.toastController.create({
+      message: `Sale Canceled`,
+      duration: 5000,
+      position: 'bottom',
+      color: 'success',
+      cssClass: 'toastClass'
+    });
+    await toast.present();
+
+    this.reloadGames.emit(true);
+  }
 }

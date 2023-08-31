@@ -8,6 +8,7 @@ import { SellingGamesComponent } from "./pages/selling-games/selling-games.compo
 import { IonicModule } from '@ionic/angular';
 import { AtomsModule } from '../Components/Atoms/atoms.module';
 import { MoleculesModule } from '../Components/Molecules/molecules.module';
+import { FormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -17,7 +18,8 @@ import { MoleculesModule } from '../Components/Molecules/molecules.module';
     CmsRoutingModule,
     IonicModule,
     AtomsModule,
-    MoleculesModule
+    MoleculesModule,
+    FormsModule,
   ]
 })
 export class CmsModule { }

@@ -109,5 +109,9 @@ export class TokenplayService {
     return await this.contract.methods.flipMintState().send({ from: userAddress });
   }
 
+  async approveMarketplace(addresMarketplace: string){
+    await this.contract.methods.approveMarketplace(addresMarketplace).send({ from: this.truffleWalletTestAddress });
+  }
+
 }
 

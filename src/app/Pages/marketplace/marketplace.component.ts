@@ -20,8 +20,5 @@ export class MarketplaceComponent  implements OnInit {
     const gameURI = Object.assign(await this.tokenplayService.fetchGameURI(game.tokenId), game);
     this.gamesInMarketPlace.push(gameURI)
   }
-
-  console.log(this.gamesInMarketPlace);
-  
   }
 }

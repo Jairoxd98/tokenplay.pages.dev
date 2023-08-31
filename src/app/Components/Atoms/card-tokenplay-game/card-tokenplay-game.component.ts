@@ -1,6 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Game } from 'src/app/models/games.model';
 import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
+import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
 import { TokenplayService } from 'src/app/services/tokenplay.service';
 
 @Component({
@@ -19,6 +20,9 @@ export class CardTokenplayGameComponent  implements OnInit {
     tokenId: 0
   };
   @Input() buttonType: 'buy' | 'play' = "buy";
+  @Input() canSellItem: boolean = false;
+  @Output() sellGame = new EventEmitter<TokenPlayUriGames>();
+  isAddingGame: boolean = false;
 
   constructor(private tokenplayService:TokenplayService ) { }
 
@@ -30,6 +34,10 @@ export class CardTokenplayGameComponent  implements OnInit {
 
   parseWeiToEth(valueInWei: number){
     return this.tokenplayService.formatWeiToEth(valueInWei);
+  }
+
+  emitSellGame(game: TokenPlayUriGames){
+    this.sellGame.emit(game);
   }
 
 }
