@@ -13,7 +13,7 @@ import { TokenplayService } from 'src/app/services/tokenplay.service';
 export class CardTokenplayGameComponent  implements OnInit {
   @Input() game: TokenPlayUriGames = {
     category: '',
-    descripttion: '',
+    description: '',
     download: '',
     image: '',
     name: '',
@@ -39,6 +39,10 @@ export class CardTokenplayGameComponent  implements OnInit {
 
   emitSellGame(game: TokenPlayUriGames){
     this.sellGame.emit(game);
+  }
+
+  balanceOf(address: string, tokenId: number){
+    this.tokenplayService.balanceOf(address,tokenId);
   }
 
 }

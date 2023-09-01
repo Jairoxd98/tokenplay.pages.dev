@@ -1,6 +1,6 @@
 export interface TokenPlayUriGames {
     category: string;
-    descripttion: string;
+    description: string;
     download: string;
     image: string;
     name: string;
@@ -19,7 +19,7 @@ export interface categoryTokenPlayGames {
 export interface MarketPlaceTokenPlayUriGames {
     arrayPosition:number;
     category: string;
-    descripttion: string;
+    description: string;
     download: string;
     image: string;
     name: string;

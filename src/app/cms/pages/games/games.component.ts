@@ -7,6 +7,8 @@ import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
 import { TokenplayService } from 'src/app/services/tokenplay.service';
+import { AuthService } from 'src/app/services/auth.service';
+
 
 @Component({
   selector: 'app-games',
@@ -19,7 +21,7 @@ export class GamesComponent  implements OnInit {
   allGames: TokenPlayGame[] = [];
   sellingGame: TokenPlayUriGames = {
     category: '',
-    descripttion: '',
+    description: '',
     download: '',
     image: '',
     name: '',
@@ -62,9 +64,11 @@ async ionViewWillEnter() {
 
   async getGames(){
     this.gamesInProperty = [];
+    const account = await this.authService.getAccount();
     const gamesObj = await this.tokeplayService.getGamesFromAddress()
     const account = await this.authService.getAccount() ?? '';
 
+    if (account !== null) {
     for (const key in gamesObj) {
         if (gamesObj.hasOwnProperty(key)) {
             const gameObj = gamesObj[key];
@@ -76,6 +80,9 @@ async ionViewWillEnter() {
     }
 
     console.log(this.gamesInProperty);
+  } else {
+    console.error("Account is null");
+  }
   }
 
   async putGameOnSale(){
@@ -86,7 +93,7 @@ async ionViewWillEnter() {
 
       this.sellingGame = {
         category: '',
-        descripttion: '',
+        description: '',
         download: '',
         image: '',
         name: '',

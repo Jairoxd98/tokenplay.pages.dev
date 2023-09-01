@@ -14,7 +14,7 @@ import { TokenplayService } from 'src/app/services/tokenplay.service';
 export class CardMarketPlaceGameComponent  implements OnInit {
   @Input() game: MarketPlaceTokenPlayUriGames = {
     category: '',
-    descripttion: '',
+    description: '',
     download: '',
     image: '',
     name: '',
