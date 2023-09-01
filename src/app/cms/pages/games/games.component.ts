@@ -20,7 +20,7 @@ export class GamesComponent  implements OnInit {
   allGames: TokenPlayGame[] = [];
   sellingGame: TokenPlayUriGames = {
     category: '',
-    descripttion: '',
+    description: '',
     download: '',
     image: '',
     name: '',
@@ -84,7 +84,7 @@ async ionViewWillEnter() {
 
       this.sellingGame = {
         category: '',
-        descripttion: '',
+        description: '',
         download: '',
         image: '',
         name: '',

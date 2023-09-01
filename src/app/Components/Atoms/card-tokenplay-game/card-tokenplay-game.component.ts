@@ -12,7 +12,7 @@ import { TokenplayService } from 'src/app/services/tokenplay.service';
 export class CardTokenplayGameComponent  implements OnInit {
   @Input() game: TokenPlayUriGames = {
     category: '',
-    descripttion: '',
+    description: '',
     download: '',
     image: '',
     name: '',
