@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ethers } from 'ethers';
 import { Game } from 'src/app/models/games.model';
 import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
 import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
@@ -28,8 +29,8 @@ export class CardTokenplayGameComponent  implements OnInit {
 
   ngOnInit() {}
 
-  buyGame(tokenId:number, price: number){
-    this.tokenplayService.buyGame(tokenId, price)
+  async buyGame(tokenId:number, price: number){
+      await this.tokenplayService.buyGame(tokenId, price)
   }
 
   parseWeiToEth(valueInWei: number){

@@ -20,9 +20,15 @@ export class AuthService
   async init() {
     if (window.ethereum) {
       this.web3 = new Web3(window.ethereum);
-      window.ethereum.on('accountsChanged', (accounts: string | any[]) => {
+      let account = await this.getAccount();
+
+      window.ethereum.on('accountsChanged', async (accounts: string | any[]) => {
         if (accounts.length > 0) {
           this.loggedIn.next(true);
+          if (account?.toLocaleUpperCase() !== accounts[0].toLocaleUpperCase()){
+            account = accounts[0];
+            location.reload();
+          } 
         } else {
           // Si esta conectado a la pagina pero el usuario desde metamask la desconecta, automaticamente lo enviamos a la home
           if (this.loggedIn) this.router.navigate(['/home']); 

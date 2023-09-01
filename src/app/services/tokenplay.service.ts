@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import { TokenPlayUriGames } from '../models/tokenplayUriGames.model';
 import { AuthService } from './auth.service';
 import { ethers } from 'ethers';
+import { BehaviorSubject } from 'rxjs';
 
 const TOKENPLAY = require('../../../build/contracts/TOKENPLAY.json');
 @Injectable({
@@ -13,6 +14,9 @@ export class TokenplayService {
   web3: any;
   contract: any;
   tokenplayAddress: any;
+
+  private waitingTx = new BehaviorSubject<boolean>(false);
+  waitingTx$ = this.waitingTx.asObservable();
 
   constructor(private authService: AuthService) {
     this.web3 = new Web3;
@@ -61,23 +65,26 @@ export class TokenplayService {
 
   // Método para comprar un juego
   async buyGame(tokenId: number, priceGameInWei: number) {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-		const signer = await provider.getSigner();
-
-    const account = await this.authService.getAccount();
-
-    const data = await this.contract.methods.purchaseNFT(tokenId).encodeABI();
-    const transactionData = {
-        from: account,
-        to: this.tokenplayAddress,
-        value: priceGameInWei,
-        gasPrice: this.web3.utils.toHex(10000000000),
-        gasLimit: this.web3.utils.toHex(1000000),
-        data: data
-    };
-
-    const pendingTransaction = await signer.sendTransaction(transactionData);
-    const confirmedTransaction = await pendingTransaction.wait();
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = await provider.getSigner();
+  
+      const data = await this.contract.methods.purchaseNFT(tokenId).encodeABI();
+      const transactionData = {
+          to: this.tokenplayAddress,
+          value: priceGameInWei,
+          gasPrice: this.web3.utils.toHex(10000000000),
+          gasLimit: this.web3.utils.toHex(1000000),
+          data: data
+      };
+      
+      const pendingTransaction = await signer.sendTransaction(transactionData);
+      this.waitingTx.next(true);
+      await pendingTransaction.wait();
+      this.waitingTx.next(false);
+    }finally{
+      this.waitingTx.next(false);
+    }
   }
 
   // Método para obtener los juegos comprados por un usuario
@@ -104,13 +111,18 @@ export class TokenplayService {
     return await this.contract.methods.flipMintState().send({ from: userAddress });
   }
 
-  async approveMarketplace(addresMarketplace: string){
+  async approveMarketplace(marketplaceAddress: string){
     const account = await this.authService.getAccount();
-    await this.contract.methods.approveMarketplace(addresMarketplace).send({ from: account });
+    await this.contract.methods.approveMarketplace(marketplaceAddress).send({from: account});
   }
   
   async balanceOf(address: string, tokenId: number){
     return await this.contract.methods.balanceOf(address, tokenId).call();
+  }
+
+  async isApprovedMarketplace(marketplaceAddress: string){
+    const account = await this.authService.getAccount();
+    return await this.contract.methods.isApprovedForAll(account, marketplaceAddress).call();
   }
 
 }

@@ -49,7 +49,7 @@ export class CardMarketPlaceGameComponent  implements OnInit {
     }
 
     try {
-      this.marketplaceService.buyNFTGame(saleId, price)
+      await this.marketplaceService.buyNFTGame(saleId, price)
 
       const toast = await this.toastController.create({
         message: `Game purchased successfully`,
@@ -85,6 +85,7 @@ export class CardMarketPlaceGameComponent  implements OnInit {
 
   async cancelGame(saleId: number){
     await this.marketplaceService.cancelSellGame(saleId);
+    this.reloadGames.emit(true);
 
     const toast = await this.toastController.create({
       message: `Sale Canceled`,
@@ -95,6 +96,5 @@ export class CardMarketPlaceGameComponent  implements OnInit {
     });
     await toast.present();
 
-    this.reloadGames.emit(true);
   }
 }

@@ -13,7 +13,7 @@ import { TokenplayService } from 'src/app/services/tokenplay.service';
   styleUrls: ['./catalogo.page.scss'],
 })
 export class CatalogoPage implements OnInit {
-
+  loading: boolean = false;
   gamesInProperty: TokenPlayUriGames[] = []
   allGames: TokenPlayGame[] = [];
   constructor(private tokeplayService: TokenplayService) { }
@@ -26,7 +26,8 @@ export class CatalogoPage implements OnInit {
       const gameURI = Object.assign(await this.tokeplayService.fetchGameURI(item.tokenId), item);
       this.gamesInProperty.push(gameURI)
     }
-    console.log(this.gamesInProperty);
+    this.tokeplayService.waitingTx$.subscribe(witingTx => {
+      this.loading = witingTx;      
+    });
   }
-
 }

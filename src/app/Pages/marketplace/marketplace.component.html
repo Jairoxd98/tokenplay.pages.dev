@@ -1,10 +1,24 @@
-<div class="h-full w-full flex flex-col gap-4 mt-16 px-8 overflow-auto">
+<div *ngIf="!loading" class="h-full w-full flex flex-col gap-4 mt-16 px-8 overflow-auto">
   <div>
     <h1 class="text-white text-5xl font-bold mt-4">MarketPlace</h1>
     <h4 class="text-white text-base">Games from other users (2 Hand Market)</h4>
   </div>
-  <div class="h-full grid grid-cols-5 gap-8 mb-12">
+  <div *ngIf="gamesInMarketPlace.length > 0" class="h-full grid grid-cols-5 gap-8 mb-12">
     <app-marketplace-card-game *ngFor="let game of gamesInMarketPlace" [game]="game" (reloadGames)="ngOnInit()"></app-marketplace-card-game>
   </div>
-
+  <div *ngIf="gamesInMarketPlace.length <= 0" class="h-full w-full flex flex-col justify-center items-center gap-4">
+    <h1 class=" text-3xl uppercase">There are no games available in the marketplace</h1>
+    <div class="flex h-16">
+      <button
+          class="w-52 shadow-lg bg-transparent border border-solid py-4 px-12 rounded-full text-white font-bold transition-all transform hover:scale-105 hover:bg-red-500 hover:border-none"
+          type="button"
+          (click)="navegateToCatalog()"
+        >
+          Go to catalog
+        </button>
+    </div>
+  </div>
+</div>
+<div *ngIf="loading" class="h-full w-full flex flex-col justify-center items-center gap-4 mt-16 px-8 overflow-auto">
+  <app-spinner></app-spinner>
 </div>

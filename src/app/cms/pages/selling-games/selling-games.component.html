@@ -1,14 +1,17 @@
 
-  <div class="w-[87%] h-full flex flex-col justify-start items-center ml-[250px]">
+  <div *ngIf="!loading" class="w-[87%] h-full flex flex-col justify-start items-center ml-[250px]">
     <div class="flex justify-center items-center gap-4 mt-20 mb-4 text-5xl">
       <h1 class="">On Sale</h1>
     </div>
     <div *ngIf="gamesOnSale.length > 0" class="w-full h-full grid grid-cols-5 gap-4 mb-12">
-      <app-marketplace-card-game *ngFor="let game of gamesOnSale" [game]="game" [buttonType]="'cancel'" (reloadGames)="getSaleGames()"></app-marketplace-card-game>
+      <app-marketplace-card-game *ngFor="let game of gamesOnSale" [game]="game" [buttonType]="'cancel'" (reloadGames)="redirectTo()"></app-marketplace-card-game>
     </div>
     <div *ngIf="gamesOnSale.length <= 0" class="w-full h-full flex justify-center items-center">
       <h3 class="text-3xl">You have no games for sale!</h3>
     </div>
+  </div>
+  <div *ngIf="loading" class="w-[87%] h-full flex flex-col justify-center items-center ml-[250px]">
+    <app-spinner></app-spinner>
   </div>
 
 

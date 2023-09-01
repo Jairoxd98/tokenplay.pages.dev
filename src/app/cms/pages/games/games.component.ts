@@ -4,6 +4,7 @@ import { ToastController } from '@ionic/angular';
 import { Game } from 'src/app/models/games.model';
 import { TokenPlayGame } from 'src/app/models/tokenplayGame.model';
 import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
+import { AuthService } from 'src/app/services/auth.service';
 import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
 import { TokenplayService } from 'src/app/services/tokenplay.service';
 
@@ -28,13 +29,19 @@ export class GamesComponent  implements OnInit {
   
   nameForm: string = '';
   priceForm: number | null = null;
-  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
+  loading: boolean = false;
 
-
-  constructor(private tokeplayService: TokenplayService, private marketplaceTokenplayService: MarketplaceTokenplayService,private router: Router,  private toastController: ToastController) { }
+  constructor(private authService: AuthService, private tokeplayService: TokenplayService, private marketplaceTokenplayService: MarketplaceTokenplayService,private router: Router,  private toastController: ToastController) { }
 
   async ngOnInit() {
-    // await this.getGames()
+    this.nameForm = ''
+    this.priceForm = null;
+    this.marketplaceTokenplayService.waitingTx$.subscribe(witingTx => {
+      if (this.loading && !witingTx) {
+        this.router.navigate(['/cms/selling-games']);
+      }
+      this.loading = witingTx;      
+    });
     
 }
 
@@ -56,11 +63,12 @@ async ionViewWillEnter() {
   async getGames(){
     this.gamesInProperty = [];
     const gamesObj = await this.tokeplayService.getGamesFromAddress()
+    const account = await this.authService.getAccount() ?? '';
 
     for (const key in gamesObj) {
         if (gamesObj.hasOwnProperty(key)) {
             const gameObj = gamesObj[key];
-            const balanceOfGame = await this.tokeplayService.balanceOf(this.truffleWalletTestAddress, gameObj.game?.tokenId);
+            const balanceOfGame = await this.tokeplayService.balanceOf(account, gameObj.game?.tokenId);
             let gameURI = Object.assign(await this.tokeplayService.fetchGameURI(gameObj.game?.tokenId), gameObj.game);
             gameURI = Object.assign(gameURI, {supply: balanceOfGame})
             this.gamesInProperty.push(gameURI)
@@ -73,7 +81,6 @@ async ionViewWillEnter() {
   async putGameOnSale(){
     if (this.nameForm && this.priceForm) {
 
-      // await this.marketplaceTokenplayService.approveMarketplace();
       await this.marketplaceTokenplayService.sellNFTGame(this.sellingGame.tokenId, this.priceForm)
       await this.ionViewWillEnter();
 
@@ -95,7 +102,6 @@ async ionViewWillEnter() {
         cssClass: 'toastClass'
       });
       await toast.present();
-      this.router.navigate(['/cms/selling-games']);
     }else{
       const toast = await this.toastController.create({
         message: `Error: Some Field is empty`,

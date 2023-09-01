@@ -41,7 +41,7 @@ const routes: Routes = [
   },
   {
     path: 'cms',
-    // canActivate: [LoginGuard],
+    canActivate: [LoginGuard],
     loadChildren: () => import('./cms/cms.module').then((m) => m.CmsModule),
   },
 ];
