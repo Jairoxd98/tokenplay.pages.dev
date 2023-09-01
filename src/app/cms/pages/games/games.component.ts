@@ -6,6 +6,8 @@ import { TokenPlayGame } from 'src/app/models/tokenplayGame.model';
 import { TokenPlayUriGames } from 'src/app/models/tokenplayUriGames.model';
 import { MarketplaceTokenplayService } from 'src/app/services/marketplace-tokenplay.service';
 import { TokenplayService } from 'src/app/services/tokenplay.service';
+import { AuthService } from 'src/app/services/auth.service';
+
 
 @Component({
   selector: 'app-games',
@@ -28,10 +30,8 @@ export class GamesComponent  implements OnInit {
   
   nameForm: string = '';
   priceForm: number | null = null;
-  private truffleWalletTestAddress: string = '0xBbA1c92C366146e0774aeDc4DC182Bc8DdD5f215';
 
-
-  constructor(private tokeplayService: TokenplayService, private marketplaceTokenplayService: MarketplaceTokenplayService,private router: Router,  private toastController: ToastController) { }
+  constructor(private tokeplayService: TokenplayService, private marketplaceTokenplayService: MarketplaceTokenplayService,private router: Router,  private toastController: ToastController, private authService: AuthService) { }
 
   async ngOnInit() {
     // await this.getGames()
@@ -55,12 +55,14 @@ async ionViewWillEnter() {
 
   async getGames(){
     this.gamesInProperty = [];
+    const account = await this.authService.getAccount();
     const gamesObj = await this.tokeplayService.getGamesFromAddress()
 
+    if (account !== null) {
     for (const key in gamesObj) {
         if (gamesObj.hasOwnProperty(key)) {
             const gameObj = gamesObj[key];
-            const balanceOfGame = await this.tokeplayService.balanceOf(this.truffleWalletTestAddress, gameObj.game?.tokenId);
+            const balanceOfGame = await this.tokeplayService.balanceOf(account, gameObj.game?.tokenId);
             let gameURI = Object.assign(await this.tokeplayService.fetchGameURI(gameObj.game?.tokenId), gameObj.game);
             gameURI = Object.assign(gameURI, {supply: balanceOfGame})
             this.gamesInProperty.push(gameURI)
@@ -68,6 +70,9 @@ async ionViewWillEnter() {
     }
 
     console.log(this.gamesInProperty);
+  } else {
+    console.error("Account is null");
+  }
   }
 
   async putGameOnSale(){

@@ -40,4 +40,8 @@ export class CardTokenplayGameComponent  implements OnInit {
     this.sellGame.emit(game);
   }
 
+  balanceOf(address: string, tokenId: number){
+    this.tokenplayService.balanceOf(address,tokenId);
+  }
+
 }
